@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Lab</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --system-blue: #007AFF;
+            --system-gray: #8E8E93;
+            --system-gray2: #AEAEB2;
+            --system-gray3: #C7C7CC;
+            --system-gray4: #D1D1D6;
+            --system-gray5: #E5E5EA;
+            --system-gray6: #F2F2F7;
+            --system-green: #34C759;
+            --system-red: #FF3B30;
+            --system-orange: #FF9500;
+            --system-purple: #AF52DE;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+            background-color: var(--system-gray6);
+            color: #1C1C1E;
+            margin: 0;
+            padding: 0;
+            line-height: 1.5;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--system-gray5);
+        }
+        
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .mode-switch {
+            display: flex;
+            background: var(--system-gray5);
+            border-radius: 8px;
+            padding: 3px;
+        }
+        
+        .mode-btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            font-weight: 500;
+        }
+        
+        .mode-btn.active {
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--system-gray5);
+            margin-bottom: 16px;
+        }
+        
+        .tab {
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--system-gray);
+            position: relative;
+        }
+        
+        .tab.active {
+            color: var(--system-blue);
+        }
+        
+        .tab.active:after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--system-blue);
+            border-radius: 3px 3px 0 0;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .quantum-register {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 16px 0;
+        }
+        
+        .qubit {
+            flex: 1;
+            min-width: 120px;
+            background: white;
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            border: 1px solid var(--system-gray5);
+        }
+        
+        .qubit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .qubit-title {
+            font-weight: 500;
+            font-size: 15px;
+        }
+        
+        .qubit-state {
+            font-size: 13px;
+            color: var(--system-gray);
+        }
+        
+        .bloch-sphere {
+            width: 80px;
+            height: 80px;
+            margin: 10px auto;
+            border-radius: 50%;
+            background: radial-gradient(circle at center, white 40%, transparent 42%),
+                        linear-gradient(90deg, transparent 49%, var(--system-gray4) 49%, var(--system-gray4) 51%, transparent 51%),
+                        linear-gradient(0deg, transparent 49%, var(--system-gray4) 49%, var(--system-gray4) 51%, transparent 51%);
+            position: relative;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+        }
+        
+        .state-vector {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: var(--system-blue);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: transform 0.3s ease;
+        }
+        
+        .state-vector:after {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            right: -3px;
+            bottom: -3px;
+            border-radius: 50%;
+            background: rgba(0, 122, 255, 0.2);
+        }
+        
+        .gate-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 12px;
+            background: rgba(0, 122, 255, 0.08);
+            border: none;
+            color: var(--system-blue);
+            border-radius: 8px;
+            margin: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .gate-btn:hover {
+            background: rgba(0, 122, 255, 0.15);
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 16px;
+            background-color: var(--system-blue);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn:hover {
+            background-color: #0066CC;
+        }
+        
+        .btn i {
+            margin-right: 6px;
+        }
+        
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .state-display {
+            font-family: 'SF Mono', Menlo, monospace;
+            background: var(--system-gray6);
+            padding: 12px;
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 14px;
+            line-height: 1.6;
+            border: 1px solid var(--system-gray5);
+        }
+        
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+        
+        .metric {
+            background: white;
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        
+        .metric-title {
+            font-size: 13px;
+            color: var(--system-gray);
+            margin-bottom: 4px;
+        }
+        
+        .metric-value {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .progress-container {
+            height: 4px;
+            background: var(--system-gray5);
+            border-radius: 2px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: var(--system-blue);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+        
+        .noise-controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+        }
+        
+        .noise-slider {
+            flex: 1;
+        }
+        
+        .noise-value {
+            font-size: 13px;
+            color: var(--system-gray);
+            min-width: 40px;
+            text-align: right;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 12px;
+            }
+            
+            .metrics {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .qubit {
+                min-width: calc(50% - 14px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Quantum Lab</h1>
+            <div class="mode-switch">
+                <button class="mode-btn active" id="ideal-mode">Идеальный</button>
+                <button class="mode-btn" id="realistic-mode">Реалистичный</button>
+            </div>
+        </header>
+        
+        <div class="card">
+            <div class="card-title">
+                <span>Квантовый регистр</span>
+                <span class="qubit-state" id="system-load">Загрузка: 0%</span>
+            </div>
+            
+            <div class="tabs">
+                <div class="tab active" data-tab="quantum">Регистр</div>
+                <div class="tab" data-tab="gates">Гейты</div>
+                <div class="tab" data-tab="algorithms">Алгоритмы</div>
+                <div class="tab" data-tab="metrics">Метрики</div>
+            </div>
+            
+            <!-- Квантовый регистр -->
+            <div id="quantum-tab" class="tab-content active">
+                <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 12px;">
+                    <div style="flex: 1;">
+                        <label for="qubit-count" style="display: block; font-size: 13px; color: var(--system-gray); margin-bottom: 4px;">Количество кубитов</label>
+                        <input type="range" id="qubit-count" min="1" max="8" value="2" style="width: 100%;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="font-size: 12px; color: var(--system-gray);">1</span>
+                            <span id="qubit-count-value" style="font-size: 12px; font-weight: 500;">2</span>
+                            <span style="font-size: 12px; color: var(--system-gray);">8</span>
+                        </div>
+                    </div>
+                    <button class="btn" id="init-register-btn">
+                        <i class="fas fa-plus"></i> Инициализировать
+                    </button>
+                </div>
+                
+                <div id="noise-controls" class="noise-controls" style="display: none;">
+                    <div style="flex: 1;">
+                        <div class="metric-title">Уровень шума</div>
+                        <input type="range" id="noise-level" min="0" max="100" value="20" class="noise-slider">
+                    </div>
+                    <div class="noise-value" id="noise-value">20%</div>
+                </div>
+                
+                <div class="quantum-register" id="quantum-register"></div>
+                
+                <h3 style="font-size: 16px; margin: 16px 0 8px 0;">Состояние системы</h3>
+                <div class="state-display" id="state-vector">
+                    |00⟩: 1.00 + 0.00i
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 16px;">
+                    <button class="btn" id="measure-all-btn" style="flex: 1;">
+                        <i class="fas fa-ruler"></i> Измерить все
+                    </button>
+                    <button class="btn" id="reset-register-btn" style="flex: 1; background: var(--system-gray5); color: #1C1C1E;">
+                        <i class="fas fa-undo"></i> Сбросить
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Гейты -->
+            <div id="gates-tab" class="tab-content">
+                <h3 style="font-size: 16px; margin: 0 0 12px 0;">Однокубитные гейты</h3>
+                <div class="btn-group" id="single-qubit-gates">
+                    <button class="gate-btn" data-gate="H">
+                        <i class="fas fa-project-diagram" style="margin-right: 6px;"></i>H (Адамара)
+                    </button>
+                    <button class="gate-btn" data-gate="X">
+                        <i class="fas fa-times" style="margin-right: 6px;"></i>X (Паули-X)
+                    </button>
+                    <button class="gate-btn" data-gate="Y">
+                        <i class="fas fa-wave-square" style="margin-right: 6px;"></i>Y (Паули-Y)
+                    </button>
+                    <button class="gate-btn" data-gate="Z">
+                        <i class="fas fa-pause" style="margin-right: 6px;"></i>Z (Паули-Z)
+                    </button>
+                    <button class="gate-btn" data-gate="S">
+                        <i class="fas fa-moon" style="margin-right: 6px;"></i>S (Фазовый)
+                    </button>
+                    <button class="gate-btn" data-gate="T">
+                        <i class="fas fa-star" style="margin-right: 6px;"></i>T
+                    </button>
+                    <button class="gate-btn" data-gate="RX">
+                        <i class="fas fa-rotate-right" style="margin-right: 6px;"></i>RX(θ)
+                    </button>
+                    <button class="gate-btn" data-gate="RY">
+                        <i class="fas fa-rotate-right" style="margin-right: 6px;"></i>RY(θ)
+                    </button>
+                    <button class="gate-btn" data-gate="RZ">
+                        <i class="fas fa-rotate-right" style="margin-right: 6px;"></i>RZ(θ)
+                    </button>
+                </div>
+                
+                <h3 style="font-size: 16px; margin: 16px 0 12px 0;">Многокубитные гейты</h3>
+                <div class="btn-group" id="multi-qubit-gates">
+                    <button class="gate-btn" data-gate="CNOT">
+                        <i class="fas fa-bullseye" style="margin-right: 6px;"></i>CNOT
+                    </button>
+                    <button class="gate-btn" data-gate="SWAP">
+                        <i class="fas fa-exchange-alt" style="margin-right: 6px;"></i>SWAP
+                    </button>
+                    <button class="gate-btn" data-gate="Toffoli">
+                        <i class="fas fa-bullseye" style="margin-right: 6px;"></i>Toffoli
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Алгоритмы -->
+            <div id="algorithms-tab" class="tab-content">
+                <h3 style="font-size: 16px; margin: 0 0 12px 0;">Квантовые алгоритмы</h3>
+                <div class="btn-group" id="algorithms-group">
+                    <button class="btn" data-algorithm="bell" style="flex: 1 1 30%;">
+                        <i class="fas fa-link"></i> Белла
+                    </button>
+                    <button class="btn" data-algorithm="grover" style="flex: 1 1 30%;">
+                        <i class="fas fa-search"></i> Гровера
+                    </button>
+                    <button class="btn" data-algorithm="deutsch" style="flex: 1 1 30%;">
+                        <i class="fas fa-function"></i> Дойча
+                    </button>
+                    <button class="btn" data-algorithm="qft" style="flex: 1 1 30%;">
+                        <i class="fas fa-wave-square"></i> QFT
+                    </button>
+                    <button class="btn" data-algorithm="teleport" style="flex: 1 1 30%;">
+                        <i class="fas fa-paper-plane"></i> Телепортация
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Метрики -->
+            <div id="metrics-tab" class="tab-content">
+                <div class="metric">
+                    <div class="metric-title">Чистота состояния</div>
+                    <div class="metric-value" id="state-purity">100%</div>
+                    <div class="progress-container">
+                        <div class="progress-bar" style="width: 100%"></div>
+                    </div>
+                </div>
+                
+                <div class="metric">
+                    <div class="metric-title">Энтропия</div>
+                    <div class="metric-value" id="entropy">0.00</div>
+                    <div class="progress-container">
+                        <div class="progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <div class="metric">
+                    <div class="metric-title">Запутанность</div>
+                    <div class="metric-value" id="entanglement">0%</div>
+                    <div class="progress-container">
+                        <div class="progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <div class="metric">
+                    <div class="metric-title">Ошибок/операцию</div>
+                    <div class="metric-value" id="error-rate">0.0%</div>
+                    <div class="progress-container">
+                        <div class="progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <canvas id="metrics-chart" height="200"></canvas>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <h3 style="font-size: 16px; margin-bottom: 12px;">Статистика операций</h3>
+                <div class="state-display" id="operations-log">
+                    [00:00] Система инициализирована
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Класс для работы с комплексными числами
+        class Complex {
+            constructor(re = 0, im = 0) {
+                this.re = re;
+                this.im = im;
+            }
+            
+            add(c) {
+                return new Complex(this.re + c.re, this.im + c.im);
+            }
+            
+            mul(c) {
+                return new Complex(
+                    this.re * c.re - this.im * c.im,
+                    this.re * c.im + this.im * c.re
+                );
+            }
+            
+            scale(s) {
+                return new Complex(this.re * s, this.im * s);
+            }
+            
+            norm() {
+                return Math.sqrt(this.re * this.re + this.im * this.im);
+            }
+            
+            conjugate() {
+                return new Complex(this.re, -this.im);
+            }
+            
+            toString() {
+                if (Math.abs(this.im) < 0.01) return this.re.toFixed(2);
+                if (Math.abs(this.re) < 0.01) return this.im.toFixed(2) + "i";
+                return this.re.toFixed(2) + (this.im >= 0 ? " + " : " - ") + Math.abs(this.im).toFixed(2) + "i";
+            }
+        }
+
+        // Глобальные переменные
+        let qubitCount = 0;
+        let stateVector = [];
+        let measuredQubits = new Set();
+        let realisticMode = false;
+        let noiseLevel = 0.2;
+        let operationsHistory = ["[00:00] Система инициализирована"];
+        let metricsHistory = [];
+        let metricsChart = null;
+
+        // Матрицы квантовых гейтов
+        const gates = {
+            'H': [
+                [new Complex(1/Math.sqrt(2)), new Complex(1/Math.sqrt(2))],
+                [new Complex(1/Math.sqrt(2)), new Complex(-1/Math.sqrt(2))]
+            ],
+            'X': [
+                [new Complex(0), new Complex(1)],
+                [new Complex(1), new Complex(0)]
+            ],
+            'Y': [
+                [new Complex(0), new Complex(0, -1)],
+                [new Complex(0, 1), new Complex(0)]
+            ],
+            'Z': [
+                [new Complex(1), new Complex(0)],
+                [new Complex(0), new Complex(-1)]
+            ],
+            'S': [
+                [new Complex(1), new Complex(0)],
+                [new Complex(0), new Complex(0, 1)]
+            ],
+            'T': [
+                [new Complex(1), new Complex(0)],
+                [new Complex(0), new Complex(Math.cos(Math.PI/4), Math.sin(Math.PI/4))]
+            ],
+            'RX': (theta) => [
+                [new Complex(Math.cos(theta/2)), new Complex(0, -Math.sin(theta/2))],
+                [new Complex(0, -Math.sin(theta/2)), new Complex(Math.cos(theta/2))]
+            ],
+            'RY': (theta) => [
+                [new Complex(Math.cos(theta/2)), new Complex(-Math.sin(theta/2))],
+                [new Complex(Math.sin(theta/2)), new Complex(Math.cos(theta/2))]
+            ],
+            'RZ': (theta) => [
+                [new Complex(Math.cos(theta/2), -Math.sin(theta/2)), new Complex(0)],
+                [new Complex(0), new Complex(Math.cos(theta/2), Math.sin(theta/2))]
+            ]
+        };
+
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', () => {
+            setupEventListeners();
+            initMetricsChart();
+            initRegister();
+        });
+
+        function setupEventListeners() {
+            // Переключение режимов
+            document.getElementById('ideal-mode').addEventListener('click', () => {
+                realisticMode = false;
+                document.getElementById('ideal-mode').classList.add('active');
+                document.getElementById('realistic-mode').classList.remove('active');
+                document.getElementById('noise-controls').style.display = 'none';
+                logOperation("Режим изменён на идеальный");
+                updateSystemMetrics();
+            });
+
+            document.getElementById('realistic-mode').addEventListener('click', () => {
+                realisticMode = true;
+                document.getElementById('ideal-mode').classList.remove('active');
+                document.getElementById('realistic-mode').classList.add('active');
+                document.getElementById('noise-controls').style.display = 'flex';
+                logOperation(`Режим изменён на реалистичный (шум: ${Math.round(noiseLevel * 100)}%)`);
+                updateSystemMetrics();
+            });
+
+            // Слайдер количества кубитов
+            document.getElementById('qubit-count').addEventListener('input', function() {
+                const value = Math.min(8, Math.max(1, parseInt(this.value)));
+                document.getElementById('qubit-count-value').textContent = value;
+                this.value = value;
+            });
+
+            // Слайдер уровня шума
+            document.getElementById('noise-level').addEventListener('input', function() {
+                noiseLevel = Math.min(1, Math.max(0, parseInt(this.value) / 100));
+                document.getElementById('noise-value').textContent = Math.round(noiseLevel * 100) + '%';
+                logOperation(`Уровень шума установлен на ${Math.round(noiseLevel * 100)}%`);
+                updateSystemMetrics();
+            });
+
+            // Кнопки
+            document.getElementById('init-register-btn').addEventListener('click', initRegister);
+            document.getElementById('measure-all-btn').addEventListener('click', measureAll);
+            document.getElementById('reset-register-btn').addEventListener('click', resetRegister);
+
+            // Вкладки
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    switchTab(tabId);
+                });
+            });
+
+            // Гейты
+            document.querySelectorAll('[data-gate]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const gateType = btn.getAttribute('data-gate');
+                    applyGate(gateType);
+                });
+            });
+
+            // Алгоритмы
+            document.querySelectorAll('[data-algorithm]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const algorithm = btn.getAttribute('data-algorithm');
+                    runAlgorithm(algorithm);
+                });
+            });
+        }
+
+        // Инициализация графика метрик
+        function initMetricsChart() {
+            const ctx = document.getElementById('metrics-chart').getContext('2d');
+            metricsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array(10).fill('').map((_, i) => i + 1),
+                    datasets: [
+                        {
+                            label: 'Чистота',
+                            data: Array(10).fill(100),
+                            borderColor: '#34C759',
+                            backgroundColor: 'rgba(52, 199, 89, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'Ошибки',
+                            data: Array(10).fill(0),
+                            borderColor: '#FF3B30',
+                            backgroundColor: 'rgba(255, 59, 48, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+
+        // Обновление метрик системы
+        function updateSystemMetrics() {
+            // Расчет метрик
+            const purity = calculatePurity();
+            const entropy = calculateEntropy();
+            const entanglement = calculateEntanglement();
+            const errorRate = realisticMode ? noiseLevel * 5 : 0;
+            
+            // Обновление UI
+            document.getElementById('state-purity').textContent = Math.round(purity * 100) + '%';
+            document.querySelector('#state-purity + .progress-container .progress-bar').style.width = Math.round(purity * 100) + '%';
+            
+            document.getElementById('entropy').textContent = entropy.toFixed(2);
+            document.querySelector('#entropy + .progress-container .progress-bar').style.width = (entropy * 100) + '%';
+            
+            document.getElementById('entanglement').textContent = Math.round(entanglement * 100) + '%';
+            document.querySelector('#entanglement + .progress-container .progress-bar').style.width = Math.round(entanglement * 100) + '%';
+            
+            document.getElementById('error-rate').textContent = errorRate.toFixed(1) + '%';
+            document.querySelector('#error-rate + .progress-container .progress-bar').style.width = errorRate + '%';
+            
+            // Обновление графика
+            updateMetricsChart(purity, errorRate * 100);
+            
+            // Расчет загрузки системы
+            const load = Math.min(100, Math.round(10 + (2 ** qubitCount) / 2 + (realisticMode ? 15 : 0) + (operationsHistory.length * 0.5)));
+            document.getElementById('system-load').textContent = `Загрузка: ${load}%`;
+        }
+
+        // Расчет чистоты состояния
+        function calculatePurity() {
+            if (qubitCount === 0) return 1;
+            
+            let trace = 0;
+            for (let i = 0; i < stateVector.length; i++) {
+                trace += stateVector[i].norm() ** 4;
+            }
+            
+            // Учет шума
+            if (realisticMode) {
+                trace *= (1 - noiseLevel);
+            }
+            
+            return Math.min(1, Math.max(0, trace));
+        }
+
+        // Расчет энтропии фон Неймана
+        function calculateEntropy() {
+            if (qubitCount === 0) return 0;
+            
+            // Для простоты считаем только для одного кубита
+            const [alpha, beta] = getQubitState(0);
+            const p0 = alpha.norm() ** 2;
+            const p1 = beta.norm() ** 2;
+            
+            let entropy = 0;
+            if (p0 > 0.0001) entropy -= p0 * Math.log2(p0);
+            if (p1 > 0.0001) entropy -= p1 * Math.log2(p1);
+            
+            // Учет шума
+            if (realisticMode) {
+                entropy += noiseLevel * 0.5;
+            }
+            
+            return Math.min(1, Math.max(0, entropy));
+        }
+
+        // Расчет запутанности
+        function calculateEntanglement() {
+            if (qubitCount < 2) return 0;
+            
+            // Для простоты считаем запутанность между первыми двумя кубитами
+            let p00 = 0, p01 = 0, p10 = 0, p11 = 0;
+            
+            for (let i = 0; i < stateVector.length; i++) {
+                const bit0 = (i >> 0) & 1;
+                const bit1 = (i >> 1) & 1;
+                const prob = stateVector[i].norm() ** 2;
+                
+                if (bit0 === 0 && bit1 === 0) p00 += prob;
+                else if (bit0 === 0 && bit1 === 1) p01 += prob;
+                else if (bit0 === 1 && bit1 === 0) p10 += prob;
+                else p11 += prob;
+            }
+            
+            const entanglement = 2 * (1 - (p00**2 + p01**2 + p10**2 + p11**2));
+            
+            // Учет шума
+            if (realisticMode) {
+                return Math.max(0, entanglement - noiseLevel);
+            }
+            
+            return Math.min(1, Math.max(0, entanglement));
+        }
+
+        // Обновление графика метрик
+        function updateMetricsChart(purity, errorRate) {
+            const now = new Date();
+            const timeLabel = now.getHours() + ':' + now.getMinutes().toString().padStart(2, '0');
+            
+            // Добавляем новые данные
+            metricsHistory.push({
+                time: timeLabel,
+                purity: purity * 100,
+                errorRate: errorRate
+            });
+            
+            // Ограничиваем историю 10 точками
+            if (metricsHistory.length > 10) {
+                metricsHistory.shift();
+            }
+            
+            // Обновляем график
+            metricsChart.data.labels = metricsHistory.map(m => m.time);
+            metricsChart.data.datasets[0].data = metricsHistory.map(m => m.purity);
+            metricsChart.data.datasets[1].data = metricsHistory.map(m => m.errorRate);
+            metricsChart.update();
+        }
+
+        // Логирование операций
+        function logOperation(message) {
+            const now = new Date();
+            const time = '[' + now.getHours() + ':' + now.getMinutes().toString().padStart(2, '0') + ']';
+            operationsHistory.push(time + ' ' + message);
+            
+            if (operationsHistory.length > 10) {
+                operationsHistory.shift();
+            }
+            
+            document.getElementById('operations-log').innerHTML = operationsHistory.join('<br>');
+        }
+
+        // Инициализация регистра
+        function initRegister() {
+            qubitCount = parseInt(document.getElementById('qubit-count').value);
+            stateVector = Array(2**qubitCount).fill().map(() => new Complex(0));
+            stateVector[0] = new Complex(1); // Начальное состояние |0...0⟩
+            measuredQubits = new Set();
+            
+            renderRegister();
+            updateStateDisplay();
+            logOperation(`Инициализирован регистр (${qubitCount} кубит${qubitCount > 1 ? 'а' : ''})`);
+            updateSystemMetrics();
+        }
+
+        // Сброс регистра
+        function resetRegister() {
+            if (qubitCount === 0) return;
+            
+            stateVector = Array(2**qubitCount).fill().map(() => new Complex(0));
+            stateVector[0] = new Complex(1);
+            measuredQubits = new Set();
+            
+            updateStateDisplay();
+            updateBlochSpheres();
+            logOperation("Регистр сброшен в начальное состояние");
+            updateSystemMetrics();
+        }
+
+        // Отрисовка регистра
+        function renderRegister() {
+            const registerEl = document.getElementById('quantum-register');
+            registerEl.innerHTML = '';
+            
+            for (let i = 0; i < qubitCount; i++) {
+                const qubitEl = document.createElement('div');
+                qubitEl.className = 'qubit';
+                qubitEl.innerHTML = `
+                    <div class="qubit-header">
+                        <span class="qubit-title">Кубит ${i}</span>
+                        <span class="qubit-state" id="qubit-state-${i}">|0⟩</span>
+                    </div>
+                    <div class="bloch-sphere">
+                        <div class="state-vector" id="bloch-${i}"></div>
+                    </div>
+                `;
+                registerEl.appendChild(qubitEl);
+            }
+        }
+
+        // Применение шума
+        function applyNoise(qubitIndex) {
+            if (!realisticMode || noiseLevel <= 0) return;
+            
+            const noiseType = Math.random();
+            const noiseProb = noiseLevel / 3; // Нормализация вероятностей
+            
+            // Деполяризующий шум
+            if (noiseType < noiseProb) {
+                applySingleQubitGate('X', qubitIndex);
+                logOperation(`Шум: X-ошибка на кубите ${qubitIndex}`);
+            } 
+            else if (noiseType < 2 * noiseProb) {
+                applySingleQubitGate('Z', qubitIndex);
+                logOperation(`Шум: Z-ошибка на кубите ${qubitIndex}`);
+            }
+            else if (noiseType < 3 * noiseProb) {
+                applySingleQubitGate('Y', qubitIndex);
+                logOperation(`Шум: Y-ошибка на кубите ${qubitIndex}`);
+            }
+            
+            // Амплитудное затухание (отдельное условие)
+            if (Math.random() < noiseLevel) {
+                const [alpha, beta] = getQubitState(qubitIndex);
+                const decayProb = noiseLevel/2;
+                
+                if (Math.random() < decayProb) {
+                    setQubitState(qubitIndex, [new Complex(1), new Complex(0)]);
+                    logOperation(`Шум: амплитудное затухание на кубите ${qubitIndex} (коллапс в |0⟩)`);
+                } else {
+                    const newAlpha = alpha.scale(Math.sqrt(1 - decayProb));
+                    const newBeta = beta.scale(Math.sqrt(1 - decayProb));
+                    setQubitState(qubitIndex, [newAlpha, newBeta]);
+                    logOperation(`Шум: амплитудное затухание на кубите ${qubitIndex}`);
+                }
+            }
+        }
+
+        // Применение гейта
+        function applyGate(gateType) {
+            if (qubitCount === 0) {
+                alert("Сначала инициализируйте регистр!");
+                return;
+            }
+            
+            if (gateType === 'CNOT' || gateType === 'SWAP' || gateType === 'Toffoli') {
+                applyMultiQubitGate(gateType);
+            } else if (gateType === 'RX' || gateType === 'RY' || gateType === 'RZ') {
+                const angleInput = prompt(`Введите угол θ (в радианах) для ${gateType}:`, "0.785");
+                if (angleInput === null) return;
+                
+                const angle = parseFloat(angleInput);
+                if (isNaN(angle)) {
+                    alert("Некорректный угол!");
+                    return;
+                }
+                
+                const qubitInput = prompt(`Применить ${gateType}(${angle.toFixed(3)}) к кубиту (0-${qubitCount-1}):`);
+                if (qubitInput === null) return;
+                
+                const qubit = parseInt(qubitInput);
+                if (isNaN(qubit) || qubit < 0 || qubit >= qubitCount) {
+                    alert("Некорректный номер кубита!");
+                    return;
+                }
+                
+                applyParametricGate(gateType, angle, qubit);
+            } else {
+                const qubitInput = prompt(`Применить ${gateType} к кубиту (0-${qubitCount-1}):`);
+                if (qubitInput === null) return;
+                
+                const qubit = parseInt(qubitInput);
+                if (isNaN(qubit) || qubit < 0 || qubit >= qubitCount) {
+                    alert("Некорректный номер кубита!");
+                    return;
+                }
+                
+                applySingleQubitGate(gateType, qubit);
+            }
+            
+            updateStateDisplay();
+            updateBlochSpheres();
+            updateSystemMetrics();
+        }
+
+        // Применение параметризованного гейта
+        function applyParametricGate(gateType, angle, qubit) {
+            const gateMatrix = gates[gateType](angle);
+            const newState = Array(2**qubitCount).fill().map(() => new Complex(0));
+            
+            for (let i = 0; i < stateVector.length; i++) {
+                const bit = (i >> qubit) & 1;
+                const targetState = i ^ (bit << qubit);
+                
+                newState[targetState] = newState[targetState].add(
+                    stateVector[i].mul(gateMatrix[0][bit])
+                );
+                newState[targetState ^ (1 << qubit)] = newState[targetState ^ (1 << qubit)].add(
+                    stateVector[i].mul(gateMatrix[1][bit])
+                );
+            }
+            
+            stateVector = newState;
+            logOperation(`Применён гейт ${gateType}(${angle.toFixed(3)}) к кубиту ${qubit}`);
+            
+            if (realisticMode) {
+                applyNoise(qubit);
+            }
+        }
+
+        // Применение однокубитного гейта
+        function applySingleQubitGate(gateType, qubit) {
+            const gateMatrix = gates[gateType];
+            const newState = Array(2**qubitCount).fill().map(() => new Complex(0));
+            
+            for (let i = 0; i < stateVector.length; i++) {
+                const bit = (i >> qubit) & 1;
+                const targetState = i ^ (bit << qubit);
+                
+                newState[targetState] = newState[targetState].add(
+                    stateVector[i].mul(gateMatrix[0][bit])
+                );
+                newState[targetState ^ (1 << qubit)] = newState[targetState ^ (1 << qubit)].add(
+                    stateVector[i].mul(gateMatrix[1][bit])
+                );
+            }
+            
+            stateVector = newState;
+            logOperation(`Применён гейт ${gateType} к кубиту ${qubit}`);
+            
+            if (realisticMode) {
+                applyNoise(qubit);
+            }
+        }
+
+        // Применение многокубитного гейта
+        function applyMultiQubitGate(gateType) {
+            let control, target, control2;
+            
+            if (gateType === 'Toffoli') {
+                control = prompt("Первый управляющий кубит (0-" + (qubitCount-1) + "):");
+                if (control === null) return;
+                control = parseInt(control);
+                
+                control2 = prompt("Второй управляющий кубит (0-" + (qubitCount-1) + "):");
+                if (control2 === null) return;
+                control2 = parseInt(control2);
+                
+                target = prompt("Целевой кубит (0-" + (qubitCount-1) + "):");
+                if (target === null) return;
+                target = parseInt(target);
+                
+                if (isNaN(control) || isNaN(control2) || isNaN(target) ||
+                    control < 0 || control >= qubitCount ||
+                    control2 < 0 || control2 >= qubitCount ||
+                    target < 0 || target >= qubitCount ||
+                    control === target || control === control2 || control2 === target) {
+                    alert("Некорректные номера кубитов! Все кубиты должны быть разными.");
+                    return;
+                }
+            } else {
+                control = prompt("Управляющий кубит (0-" + (qubitCount-1) + "):");
+                if (control === null) return;
+                control = parseInt(control);
+                
+                target = prompt("Целевой кубит (0-" + (qubitCount-1) + "):");
+                if (target === null) return;
+                target = parseInt(target);
+                
+                if (isNaN(control) || isNaN(target) ||
+                    control < 0 || control >= qubitCount ||
+                    target < 0 || target >= qubitCount ||
+                    control === target) {
+                    alert("Некорректные номера кубитов! Управляющий и целевой кубиты должны быть разными.");
+                    return;
+                }
+            }
+            
+            const newState = Array(2**qubitCount).fill().map(() => new Complex(0));
+            
+            for (let i = 0; i < stateVector.length; i++) {
+                let newIndex = i;
+                const controlBit = (i >> control) & 1;
+                const targetBit = (i >> target) & 1;
+                
+                if (gateType === 'CNOT' && controlBit === 1) {
+                    newIndex = i ^ (1 << target);
+                } else if (gateType === 'SWAP' && controlBit !== targetBit) {
+                    newIndex = i ^ (1 << control) ^ (1 << target);
+                } else if (gateType === 'Toffoli') {
+                    const control2Bit = (i >> control2) & 1;
+                    if (controlBit === 1 && control2Bit === 1) {
+                        newIndex = i ^ (1 << target);
+                    }
+                }
+                
+                newState[newIndex] = newState[newIndex].add(stateVector[i]);
+            }
+            
+            stateVector = newState;
+            
+            if (gateType === 'Toffoli') {
+                logOperation(`Применён гейт Toffoli (${control},${control2}→${target})`);
+            } else {
+                logOperation(`Применён гейт ${gateType} (${control}→${target})`);
+            }
+            
+            if (realisticMode) {
+                applyNoise(control);
+                applyNoise(target);
+                if (gateType === 'Toffoli') applyNoise(control2);
+            }
+        }
+
+        // Измерение всех кубитов
+        function measureAll() {
+            if (qubitCount === 0) return;
+            
+            let results = [];
+            for (let i = 0; i < qubitCount; i++) {
+                results.push(measureQubit(i));
+            }
+            
+            logOperation(`Измерение всех кубитов: ${results.join('')}`);
+            updateSystemMetrics();
+        }
+
+        // Измерение одного кубита
+        function measureQubit(qubitIndex) {
+            if (measuredQubits.has(qubitIndex)) {
+                return parseInt(document.getElementById(`qubit-state-${qubitIndex}`).textContent.match(/\d/)[0]);
+            }
+            
+            // Вычисляем вероятность |0⟩
+            let prob0 = 0;
+            for (let i = 0; i < stateVector.length; i++) {
+                if (((i >> qubitIndex) & 1) === 0) {
+                    prob0 += stateVector[i].norm() ** 2;
+                }
+            }
+            
+            // Добавляем шум измерения в реалистичном режиме
+            let noisyProb0 = prob0;
+            if (realisticMode) {
+                noisyProb0 = prob0 * (1 - noiseLevel/2) + (1 - prob0) * (noiseLevel/2);
+            }
+            
+            // Коллапс состояния
+            const result = Math.random() < noisyProb0 ? 0 : 1;
+            measuredQubits.add(qubitIndex);
+            
+            // Обновляем отображение
+            document.getElementById(`qubit-state-${qubitIndex}`).textContent = `|${result}⟩ (измерено)`;
+            
+            // В реалистичном режиме добавляем вероятность ошибки измерения
+            if (realisticMode && Math.random() < noiseLevel/4) {
+                const flippedResult = 1 - result;
+                document.getElementById(`qubit-state-${qubitIndex}`).textContent = `|${flippedResult}⟩ (измерено, ошибка)`;
+                logOperation(`Измерение кубита ${qubitIndex}: ошибка (${result}→${flippedResult})`);
+                return flippedResult;
+            }
+            
+            logOperation(`Измерение кубита ${qubitIndex}: ${result}`);
+            return result;
+        }
+
+        // Обновление отображения состояния
+        function updateStateDisplay() {
+            let stateText = '';
+            for (let i = 0; i < stateVector.length; i++) {
+                if (stateVector[i].norm() > 0.01) {
+                    const state = i.toString(2).padStart(qubitCount, '0');
+                    stateText += `|${state}⟩: ${stateVector[i].toString()}<br>`;
+                }
+            }
+            document.getElementById('state-vector').innerHTML = stateText || "|0⟩: 1.00 + 0.00i";
+        }
+
+        // Обновление сфер Блоха
+        function updateBlochSpheres() {
+            for (let i = 0; i < qubitCount; i++) {
+                const blochSphere = document.getElementById(`bloch-${i}`);
+                if (!blochSphere) continue;
+                
+                if (measuredQubits.has(i)) {
+                    blochSphere.style.display = 'none';
+                    continue;
+                }
+                
+                blochSphere.style.display = 'block';
+                const [alpha, beta] = getQubitState(i);
+                const theta = 2 * Math.acos(alpha.norm());
+                const phi = beta.norm() > 0 ? Math.atan2(beta.im, beta.re) : 0;
+                
+                const x = Math.sin(theta) * Math.cos(phi) * 35;
+                const y = Math.sin(theta) * Math.sin(phi) * 35;
+                
+                blochSphere.style.transform = `translate(-50%, -50%) translateX(${x}px) translateY(${-y}px)`;
+                
+                // Цвет в зависимости от фазы
+                const hue = Math.round((phi + Math.PI) / (2 * Math.PI) * 360);
+                blochSphere.style.backgroundColor = `hsl(${hue}, 80%, 60%)`;
+            }
+        }
+
+        // Получение состояния отдельного кубита
+        function getQubitState(qubitIndex) {
+            let alpha = new Complex(0);
+            let beta = new Complex(0);
+            
+            for (let i = 0; i < stateVector.length; i++) {
+                const bit = (i >> qubitIndex) & 1;
+                if (bit === 0) {
+                    alpha = alpha.add(stateVector[i]);
+                } else {
+                    beta = beta.add(stateVector[i]);
+                }
+            }
+            
+            // Нормализация
+            const norm = Math.sqrt(alpha.norm()**2 + beta.norm()**2);
+            return norm > 0 ? [alpha.scale(1/norm), beta.scale(1/norm)] : [new Complex(1), new Complex(0)];
+        }
+
+        // Установка состояния отдельного кубита
+        function setQubitState(qubitIndex, [alpha, beta]) {
+            const newState = Array(2**qubitCount).fill().map(() => new Complex(0));
+            const norm = Math.sqrt(alpha.norm()**2 + beta.norm()**2);
+            const normalizedAlpha = norm > 0 ? alpha.scale(1/norm) : new Complex(1);
+            const normalizedBeta = norm > 0 ? beta.scale(1/norm) : new Complex(0);
+            
+            for (let i = 0; i < stateVector.length; i++) {
+                const bit = (i >> qubitIndex) & 1;
+                if (bit === 0) {
+                    newState[i] = stateVector[i].mul(normalizedAlpha);
+                } else {
+                    newState[i] = stateVector[i].mul(normalizedBeta);
+                }
+            }
+            
+            stateVector = newState;
+        }
+
+        // Запуск алгоритмов
+        function runAlgorithm(algorithm) {
+            if (qubitCount === 0) {
+                alert("Сначала инициализируйте регистр!");
+                return;
+            }
+            
+            switch(algorithm) {
+                case 'bell':
+                    if (qubitCount < 2) {
+                        alert("Нужно минимум 2 кубита!");
+                        return;
+                    }
+                    initRegister();
+                    applySingleQubitGate('H', 0);
+                    applyMultiQubitGate('CNOT', 0, 1);
+                    logOperation("Выполнен алгоритм создания состояния Белла");
+                    break;
+                    
+                case 'grover':
+                    if (qubitCount < 2) {
+                        alert("Нужно минимум 2 кубита!");
+                        return;
+                    }
+                    initRegister();
+                    // Применяем Адамара ко всем кубитам
+                    for (let i = 0; i < qubitCount; i++) {
+                        applySingleQubitGate('H', i);
+                    }
+                    
+                    // Итерации Гровера (для 2 кубитов оптимально 1 итерация)
+                    const iterations = Math.floor(Math.PI/4 * Math.sqrt(2**qubitCount));
+                    
+                    for (let iter = 0; iter < iterations; iter++) {
+                        // Оракул (помечаем состояние |11...1⟩)
+                        for (let i = 0; i < qubitCount; i++) {
+                            applySingleQubitGate('X', i);
+                        }
+                        applyMultiQubitGate('Toffoli', 0, 1, qubitCount > 2 ? 2 : 1);
+                        for (let i = 0; i < qubitCount; i++) {
+                            applySingleQubitGate('X', i);
+                        }
+                        
+                        // Диффузия Гровера
+                        for (let i = 0; i < qubitCount; i++) {
+                            applySingleQubitGate('H', i);
+                            applySingleQubitGate('X', i);
+                        }
+                        applyMultiQubitGate('CNOT', 0, 1);
+                        for (let i = 0; i < qubitCount; i++) {
+                            applySingleQubitGate('X', i);
+                            applySingleQubitGate('H', i);
+                        }
+                    }
+                    logOperation(`Выполнен алгоритм Гровера (${iterations} итераций)`);
+                    break;
+                    
+                case 'deutsch':
+                    if (qubitCount < 2) {
+                        alert("Нужно минимум 2 кубита!");
+                        return;
+                    }
+                    initRegister();
+                    applySingleQubitGate('X', 1);
+                    applySingleQubitGate('H', 0);
+                    applySingleQubitGate('H', 1);
+                    
+                    // Случайный выбор типа функции (постоянная или сбалансированная)
+                    const functionType = Math.random() < 0.5 ? 'constant' : 'balanced';
+                    
+                    if (functionType === 'constant') {
+                        // Оракул для постоянной функции f(x) = 1
+                        applySingleQubitGate('X', 1);
+                    } else {
+                        // Оракул для сбалансированной функции f(x) = x
+                        applyMultiQubitGate('CNOT', 0, 1);
+                    }
+                    
+                    applySingleQubitGate('H', 0);
+                    logOperation(`Выполнен алгоритм Дойча (${functionType} функция)`);
+                    break;
+                    
+                case 'qft':
+                    if (qubitCount < 2) {
+                        alert("Нужно минимум 2 кубита!");
+                        return;
+                    }
+                    initRegister();
+                    // Применяем Адамара и контролируемые повороты
+                    for (let i = 0; i < qubitCount; i++) {
+                        applySingleQubitGate('H', i);
+                        for (let j = i + 1; j < qubitCount; j++) {
+                            const angle = Math.PI / (2 ** (j - i));
+                            applyControlledPhaseGate(i, j, angle);
+                        }
+                    }
+                    // Переворачиваем порядок кубитов
+                    for (let i = 0; i < Math.floor(qubitCount / 2); i++) {
+                        applyMultiQubitGate('SWAP', i, qubitCount - 1 - i);
+                    }
+                    logOperation("Выполнено квантовое преобразование Фурье");
+                    break;
+                    
+                case 'teleport':
+                    if (qubitCount < 3) {
+                        alert("Нужно минимум 3 кубита!");
+                        return;
+                    }
+                    initRegister();
+                    // Подготовка состояния для телепортации (кубит 0 в суперпозиции)
+                    applySingleQubitGate('H', 0);
+                    // Создаем состояние Белла между кубитами 1 и 2
+                    applySingleQubitGate('H', 1);
+                    applyMultiQubitGate('CNOT', 1, 2);
+                    // Применяем CNOT между кубитами 0 и 1
+                    applyMultiQubitGate('CNOT', 0, 1);
+                    // Применяем Адамара к кубиту 0
+                    applySingleQubitGate('H', 0);
+                    // Измеряем кубиты 0 и 1
+                    const m0 = measureQubit(0);
+                    const m1 = measureQubit(1);
+                    // Применяем корректирующие гейты
+                    if (m1 === 1) applySingleQubitGate('X', 2);
+                    if (m0 === 1) applySingleQubitGate('Z', 2);
+                    logOperation("Выполнена квантовая телепортация");
+                    break;
+            }
+            
+            updateStateDisplay();
+            updateBlochSpheres();
+            updateSystemMetrics();
+        }
+
+        // Применение контролируемого фазового гейта
+        function applyControlledPhaseGate(control, target, angle) {
+            const newState = Array(2**qubitCount).fill().map(() => new Complex(0));
+            
+            for (let i = 0; i < stateVector.length; i++) {
+                const controlBit = (i >> control) & 1;
+                const targetBit = (i >> target) & 1;
+                
+                if (controlBit === 1 && targetBit === 1) {
+                    const phase = new Complex(Math.cos(angle), Math.sin(angle));
+                    newState[i] = stateVector[i].mul(phase);
+                } else {
+                    newState[i] = stateVector[i];
+                }
+            }
+            
+            stateVector = newState;
+            logOperation(`Применён контролируемый фазовый гейт (${control}→${target}, угол: ${angle.toFixed(3)})`);
+            
+            if (realisticMode) {
+                applyNoise(control);
+                applyNoise(target);
+            }
+        }
+
+        // Переключение вкладок
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add('active');
+            document.getElementById(`${tabId}-tab`).classList.add('active');
+        }
+    </script>
+</body>
+</html>

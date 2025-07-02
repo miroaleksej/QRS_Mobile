@@ -1,0 +1,2723 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuantumX Production</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjs@11.6.0/lib/browser/math.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --nc-tx-1: #ffffff;
+            --nc-tx-2: #eeeeee;
+            --nc-bg-1: #1a1a1a;
+            --nc-bg-2: #2a2a2a;
+            --nc-bg-3: #3a3a3a;
+            --nc-lk-1: #007aff;
+            --nc-lk-2: #5ac8fa;
+            --nc-lk-tx: #ffffff;
+            --nc-ac-1: #007aff;
+            --nc-ac-tx: #ffffff;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.5;
+            color: var(--nc-tx-1);
+            background-color: var(--nc-bg-1);
+            padding: 0;
+            margin: 0;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        
+        .tabs {
+            display: flex;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 10px;
+            background-color: var(--nc-bg-2);
+            border-radius: 8px;
+        }
+        
+        .tab {
+            padding: 12px 16px;
+            cursor: pointer;
+            white-space: nowrap;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom: 2px solid var(--nc-ac-1);
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 10px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .metric-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .metric-card {
+            flex: 1 1 150px;
+            min-width: 0;
+            background-color: var(--nc-bg-2);
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .metric-title {
+            font-size: 14px;
+            color: var(--nc-tx-2);
+            margin-bottom: 5px;
+        }
+        
+        .metric-value {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background-color: var(--nc-bg-3);
+            border-radius: 3px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 250px;
+            margin-bottom: 15px;
+            background-color: var(--nc-bg-2);
+            border-radius: 8px;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        
+        #quantum-visualization {
+            width: 100%;
+            height: 250px;
+            background-color: var(--nc-bg-2);
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 16px;
+            background-color: var(--nc-ac-1);
+            color: var(--nc-ac-tx);
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.2s;
+            min-width: 44px;
+            min-height: 44px;
+            margin: 5px;
+        }
+        
+        .btn:active {
+            transform: scale(0.95);
+            background-color: var(--nc-lk-1);
+        }
+        
+        .btn i {
+            margin-right: 8px;
+        }
+        
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 15px;
+            justify-content: center;
+        }
+        
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--nc-bg-2);
+            color: var(--nc-tx-1);
+            padding: 12px 16px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            max-width: 90%;
+        }
+        
+        .notification.show {
+            opacity: 1;
+        }
+        
+        .notification.success {
+            border-left: 4px solid #34c759;
+        }
+        
+        .notification.error {
+            border-left: 4px solid #ff3b30;
+        }
+        
+        .notification.info {
+            border-left: 4px solid #007aff;
+        }
+        
+        .notification-icon {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+        
+        .notification.success .notification-icon {
+            color: #34c759;
+        }
+        
+        .notification.error .notification-icon {
+            color: #ff3b30;
+        }
+        
+        .notification.info .notification-icon {
+            color: #007aff;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            z-index: 1001;
+            overflow-y: auto;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        .modal-content {
+            background-color: var(--nc-bg-2);
+            border-radius: 8px;
+            padding: 20px;
+            max-width: 500px;
+            margin: 20px auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .modal-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--nc-tx-2);
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--nc-bg-3);
+            border-radius: 4px;
+            background-color: var(--nc-bg-1);
+            color: var(--nc-tx-1);
+            box-sizing: border-box;
+        }
+        
+        .task-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background-color: var(--nc-bg-2);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .task-info {
+            flex: 1;
+        }
+        
+        .task-name {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+        
+        .task-desc {
+            display: block;
+            font-size: 14px;
+            color: var(--nc-tx-2);
+        }
+        
+        #chat-messages {
+            height: 300px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            background-color: var(--nc-bg-2);
+            border-radius: 8px;
+            padding: 10px;
+        }
+        
+        .message {
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+        
+        .user-message {
+            background-color: var(--nc-ac-1);
+            color: var(--nc-ac-tx);
+            margin-left: auto;
+        }
+        
+        .ai-message {
+            background-color: var(--nc-bg-3);
+            margin-right: auto;
+        }
+        
+        #chat-input-container {
+            display: flex;
+            gap: 5px;
+        }
+        
+        #chat-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--nc-bg-3);
+            border-radius: 4px;
+            background-color: var(--nc-bg-1);
+            color: var(--nc-tx-1);
+        }
+        
+        .quick-message-btn {
+            padding: 5px 10px;
+            background-color: var(--nc-bg-3);
+            border: none;
+            border-radius: 4px;
+            color: var(--nc-tx-1);
+            font-size: 12px;
+            cursor: pointer;
+            margin-bottom: 5px;
+        }
+        
+        .blink {
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        /* Стили для квантовой химии */
+        .molecule-structure {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            margin: 20px auto;
+            perspective: 1000px;
+        }
+        
+        .atom {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            transform-style: preserve-3d;
+            transition: transform 0.3s;
+        }
+        
+        .atom[data-element="H"] {
+            background-color: #FF9999;
+        }
+        
+        .atom[data-element="C"] {
+            background-color: #AAAAAA;
+        }
+        
+        .atom[data-element="O"] {
+            background-color: #FF6666;
+        }
+        
+        .bond {
+            position: absolute;
+            height: 2px;
+            background-color: #555;
+            transform-origin: 0 50%;
+        }
+        
+        /* Стили для визуализации квантовых состояний */
+        .quantum-state-view {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .state-vector {
+            flex: 1;
+            min-width: 200px;
+            background-color: var(--nc-bg-2);
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .state-probabilities {
+            flex: 1;
+            min-width: 200px;
+            background-color: var(--nc-bg-2);
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .state-vector-title, .state-probabilities-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--nc-tx-2);
+        }
+        
+        .state-entry {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-family: monospace;
+        }
+        
+        .state-label {
+            color: var(--nc-tx-2);
+        }
+        
+        .state-value {
+            color: var(--nc-tx-1);
+        }
+        
+        /* Стили для управления шумами */
+        .noise-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .noise-control-group {
+            background-color: var(--nc-bg-2);
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .noise-control-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--nc-tx-1);
+        }
+        
+        /* Стили для светлой темы */
+        body.light-theme {
+            --nc-tx-1: #000000;
+            --nc-tx-2: #333333;
+            --nc-bg-1: #f5f5f7;
+            --nc-bg-2: #ffffff;
+            --nc-bg-3: #e5e5ea;
+            --nc-lk-1: #007aff;
+            --nc-lk-2: #5ac8fa;
+            --nc-lk-tx: #ffffff;
+            --nc-ac-1: #007aff;
+            --nc-ac-tx: #ffffff;
+        }
+        
+        body.blue-theme {
+            --nc-tx-1: #ffffff;
+            --nc-tx-2: #eeeeee;
+            --nc-bg-1: #0a192f;
+            --nc-bg-2: #172a45;
+            --nc-bg-3: #303f60;
+            --nc-lk-1: #64ffda;
+            --nc-lk-2: #5ac8fa;
+            --nc-lk-tx: #0a192f;
+            --nc-ac-1: #64ffda;
+            --nc-ac-tx: #0a192f;
+        }
+        
+        @media (max-width: 768px) {
+            .tab {
+                padding: 10px 12px;
+                font-size: 14px;
+            }
+            
+            .metric-card {
+                flex: 1 1 100%;
+            }
+            
+            .chart-container {
+                height: 200px;
+            }
+            
+            #quantum-visualization {
+                height: 200px;
+            }
+            
+            .btn {
+                padding: 10px 12px;
+                font-size: 14px;
+            }
+            
+            .modal-content {
+                padding: 15px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .tabs {
+                font-size: 12px;
+            }
+            
+            .tab {
+                padding: 8px 10px;
+            }
+            
+            .metric-value {
+                font-size: 16px;
+            }
+            
+            .chart-container {
+                height: 180px;
+            }
+            
+            #quantum-visualization {
+                height: 180px;
+            }
+            
+            #chat-messages {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="text-align: center; margin-bottom: 5px;">QuantumX Production</h1>
+        <div style="text-align: center; margin-bottom: 15px; color: var(--nc-tx-2);">
+            <span id="current-time"></span> | WebAssembly + Rust Core
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('dashboard')">Дашборд</div>
+            <div class="tab" onclick="switchTab('quantum')">Квантовый симулятор</div>
+            <div class="tab" onclick="switchTab('molecules')">Молекулы</div>
+            <div class="tab" onclick="switchTab('tasks')">Задачи</div>
+            <div class="tab" onclick="switchTab('ai')">ИИ ассистент</div>
+            <div class="tab" onclick="switchTab('settings')">Настройки</div>
+        </div>
+        
+        <!-- Дашборд -->
+        <div id="dashboard-tab" class="tab-content" style="display: block;">
+            <div class="metric-container">
+                <div class="metric-card">
+                    <div class="metric-title">Использование CPU</div>
+                    <div class="metric-value" id="cpu-usage-text">0%</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="cpu-usage" style="width: 0%; background-color: #007aff;"></div>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-title">Использование памяти</div>
+                    <div class="metric-value" id="memory-usage-text">0%</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="memory-usage" style="width: 0%; background-color: #34c759;"></div>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-title">Температура CPU</div>
+                    <div class="metric-value" id="cpu-temp-text">0°C</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="cpu-temp" style="width: 0%; background-color: #34c759;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <h3>Производительность в реальном времени</h3>
+            <div class="chart-container">
+                <canvas id="real-time-chart"></canvas>
+            </div>
+            
+            <div class="metric-container">
+                <div class="metric-card">
+                    <div class="metric-title">Ошибка кубитов</div>
+                    <div class="metric-value" id="qubit-error-value">0.000000</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-title">Фиделитет гейтов</div>
+                    <div class="metric-value" id="gate-fidelity-value">0.0000</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-title">Скорость эмуляции</div>
+                    <div class="metric-value" id="emulation-speed">0 q/сек</div>
+                </div>
+            </div>
+            
+            <h3>Квантовое состояние</h3>
+            <div class="quantum-state-view">
+                <div class="state-vector">
+                    <div class="state-vector-title">Вектор состояния</div>
+                    <div id="state-vector-values"></div>
+                </div>
+                <div class="state-probabilities">
+                    <div class="state-probabilities-title">Вероятности</div>
+                    <div id="state-probabilities"></div>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <canvas id="quantum-state-chart"></canvas>
+            </div>
+            
+            <div id="quantum-visualization"></div>
+            
+            <div class="metric-card">
+                <div class="metric-title">Энтропия состояния</div>
+                <div class="metric-value" id="state-entropy-value">0.00</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="state-entropy-bar" style="width: 0%; background-color: #5856d6;"></div>
+                </div>
+            </div>
+            
+            <h3>Безопасность</h3>
+            <div class="metric-container">
+                <div class="metric-card">
+                    <div class="metric-title">Последняя ротация ключей</div>
+                    <div class="metric-value" id="key-rotation-time">00:00:00</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-title">До следующей ротации</div>
+                    <div class="metric-value" id="key-expiration">00:00:00</div>
+                </div>
+            </div>
+            
+            <button class="btn" id="rotate-keys-btn">
+                <i class="fas fa-sync-alt"></i> Ротация ключей
+            </button>
+        </div>
+        
+        <!-- Квантовый симулятор -->
+        <div id="quantum-tab" class="tab-content">
+            <h3>Настройки симулятора</h3>
+            
+            <div class="form-group">
+                <label class="form-label">Количество кубитов</label>
+                <select id="qubit-count-select" class="form-control" onchange="updateQubitCount()">
+                    <option value="2">2 кубита</option>
+                    <option value="3">3 кубита</option>
+                    <option value="4">4 кубита</option>
+                    <option value="5">5 кубитов</option>
+                    <option value="6">6 кубитов</option>
+                    <option value="7">7 кубитов</option>
+                    <option value="8">8 кубитов</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Модель шумов</label>
+                <select id="noise-model-select" class="form-control" onchange="updateNoiseModel()">
+                    <option value="basic">Базовая</option>
+                    <option value="advanced">Продвинутая (ARS)</option>
+                    <option value="none">Без шумов</option>
+                </select>
+            </div>
+            
+            <div class="noise-controls" id="noise-controls">
+                <!-- Динамически генерируемые элементы управления шумами -->
+            </div>
+            
+            <h3>Квантовые операции</h3>
+            <div class="btn-group">
+                <button class="btn" onclick="applyGate('h')">
+                    <i class="fas fa-wave-square"></i> H (Адамара)
+                </button>
+                <button class="btn" onclick="applyGate('x')">
+                    <i class="fas fa-exchange-alt"></i> X (NOT)
+                </button>
+                <button class="btn" onclick="applyGate('y')">
+                    <i class="fas fa-sync-alt"></i> Y
+                </button>
+                <button class="btn" onclick="applyGate('z')">
+                    <i class="fas fa-ban"></i> Z
+                </button>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn" onclick="showControlModal('cx')">
+                    <i class="fas fa-project-diagram"></i> CNOT
+                </button>
+                <button class="btn" onclick="showControlModal('cz')">
+                    <i class="fas fa-link"></i> CZ
+                </button>
+                <button class="btn" onclick="showControlModal('swap')">
+                    <i class="fas fa-random"></i> SWAP
+                </button>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn" onclick="measureQubit()">
+                    <i class="fas fa-ruler"></i> Измерить
+                </button>
+                <button class="btn" onclick="resetState()">
+                    <i class="fas fa-undo"></i> Сбросить
+                </button>
+            </div>
+            
+            <h3>Создание схемы</h3>
+            <div id="circuit-display" style="min-height: 100px; background-color: var(--nc-bg-2); border-radius: 8px; padding: 10px; margin-bottom: 15px;">
+                <!-- Здесь будет отображаться квантовая схема -->
+            </div>
+            
+            <button class="btn" onclick="runCircuit()">
+                <i class="fas fa-play"></i> Запустить схему
+            </button>
+            <button class="btn" onclick="clearCircuit()">
+                <i class="fas fa-trash"></i> Очистить схему
+            </button>
+            
+            <h3>Результаты измерений</h3>
+            <div id="measurement-results" style="background-color: var(--nc-bg-2); border-radius: 8px; padding: 10px; min-height: 50px;">
+                <!-- Здесь будут отображаться результаты измерений -->
+            </div>
+        </div>
+
+        <!-- Молекулы -->
+        <div id="molecules-tab" class="tab-content">
+            <h3>Молекулярный симулятор</h3>
+
+            <div class="form-group">
+                <label class="form-label">Молекула</label>
+                <select id="molecule-select" class="form-control" onchange="loadMolecule()">
+                    <option value="">Выберите молекулу</option>
+                    <option value="h2">H₂ (Молекула водорода)</option>
+                    <option value="h2o">H₂O (Вода)</option>
+                    <option value="co2">CO₂ (Диоксид углерода)</option>
+                    <option value="ch4">CH₄ (Метан)</option>
+                    <option value="c6h6">C₆H₆ (Бензол)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Базисный набор</label>
+                <select id="basis-set-select" class="form-control" onchange="updateBasisSet()">
+                    <option value="sto-3g">STO-3G</option>
+                    <option value="6-31g">6-31G</option>
+                    <option value="cc-pvdz">cc-pVDZ</option>
+                </select>
+            </div>
+
+            <div id="molecule-viewer" style="text-align: center; padding: 20px; background-color: var(--nc-bg-2); border-radius: 8px; margin-bottom: 15px;">
+                Выберите молекулу для просмотра
+            </div>
+
+            <h3>Энергетические состояния</h3>
+            <div class="chart-container">
+                <canvas id="molecule-energy-chart"></canvas>
+            </div>
+
+            <div class="metric-container">
+                <div class="metric-card">
+                    <div class="metric-title">Энергия основного состояния</div>
+                    <div class="metric-value" id="ground-state-energy">0.0000 Ha</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Точность VQE</div>
+                    <div class="metric-value" id="vqe-accuracy">0.00%</div>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn" onclick="calculateGroundState()">
+                    <i class="fas fa-calculator"></i> Расчет основного состояния
+                </button>
+                <button class="btn" onclick="runVQE()">
+                    <i class="fas fa-atom"></i> Запуск VQE
+                </button>
+            </div>
+
+            <h3>История расчетов</h3>
+            <div id="calculation-history" style="max-height: 200px; overflow-y: auto; background-color: var(--nc-bg-2); border-radius: 8px; padding: 10px;">
+                <!-- Здесь будут появляться выполненные расчеты -->
+            </div>
+        </div>
+
+        <!-- Задачи -->
+        <div id="tasks-tab" class="tab-content">
+            <h3>Активные задачи</h3>
+            <div id="tasks-container">
+                <!-- Здесь будут появляться задачи -->
+            </div>
+
+            <button class="btn" onclick="showTaskModal()">
+                <i class="fas fa-plus"></i> Добавить задачу
+            </button>
+        </div>
+
+        <!-- ИИ ассистент -->
+        <div id="ai-tab" class="tab-content">
+            <h3>Квантовый ИИ ассистент</h3>
+
+            <div id="chat-messages">
+                <div class="message ai-message">
+                    Здравствуйте! Я ваш квантовый ИИ ассистент. Чем могу помочь?
+                </div>
+            </div>
+
+            <div style="margin-bottom: 10px;">
+                <button class="quick-message-btn" onclick="sendQuickMessage('Как улучшить фиделитет гейтов?')">Фиделитет гейтов</button>
+                <button class="quick-message-btn" onclick="sendQuickMessage('Оптимальные параметры для VQE')">Параметры VQE</button>
+                <button class="quick-message-btn" onclick="sendQuickMessage('Диагностика ошибок кубитов')">Диагностика ошибок</button>
+            </div>
+
+            <div id="chat-input-container">
+                <input type="text" id="chat-input" placeholder="Введите ваш вопрос..." class="form-control">
+                <button class="btn" onclick="sendMessage()">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+
+            <div class="btn-group" style="margin-top: 10px;">
+                <button class="btn" onclick="clearChat()">
+                    <i class="fas fa-trash"></i> Очистить
+                </button>
+                <button class="btn" onclick="saveChat()">
+                    <i class="fas fa-save"></i> Сохранить
+                </button>
+            </div>
+        </div>
+
+        <!-- Настройки -->
+        <div id="settings-tab" class="tab-content">
+            <h3>Настройки системы</h3>
+            
+            <div class="form-group">
+                <label class="form-label">Тема интерфейса</label>
+                <select id="system-theme" class="form-control" onchange="changeTheme()">
+                    <option value="dark">Темная</option>
+                    <option value="light">Светлая</option>
+                    <option value="blue">Синяя</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Интервал обновления (мс)</label>
+                <input type="number" id="update-interval" class="form-control" value="1000" min="100" max="5000">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">
+                    <input type="checkbox" id="auto-save" checked> Автосохранение
+                </label>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Режим ANI</label>
+                <select id="ani-mode" class="form-control">
+                    <option value="balanced">Сбалансированный</option>
+                    <option value="performance">Макс. производительность</option>
+                    <option value="accuracy">Макс. точность</option>
+                </select>
+            </div>
+            
+            <button class="btn" onclick="saveSystemSettings()" style="width: 100%;">
+                <i class="fas fa-save"></i> Сохранить настройки
+            </button>
+        </div>
+    </div>
+
+    <!-- Модальное окно задачи -->
+    <div id="task-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Новая задача</div>
+                <button class="modal-close" onclick="hideTaskModal()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Название задачи</label>
+                <input type="text" id="task-name" class="form-control" placeholder="Например: Оптимизация QAOA">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Описание</label>
+                <input type="text" id="task-description" class="form-control" placeholder="Краткое описание задачи">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Параметры (JSON)</label>
+                <textarea id="task-params-json" class="form-control" rows="3" placeholder='{"iterations": 100, "layers": 3}'></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Режим выполнения</label>
+                <select id="task-mode" class="form-control">
+                    <option value="auto">Автоматический (ANI)</option>
+                    <option value="manual">Ручной</option>
+                </select>
+            </div>
+            <button class="btn" onclick="addNewTask()" style="width: 100%;">
+                <i class="fas fa-plus"></i> Добавить задачу
+            </button>
+        </div>
+    </div>
+
+    <!-- Модальное окно управления гейтами -->
+    <div id="gate-control-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="gate-modal-title">Применить гейт</div>
+                <button class="modal-close" onclick="hideGateModal()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Тип гейта</label>
+                <input type="text" id="gate-type" class="form-control" readonly>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Целевой кубит</label>
+                <select id="target-qubit" class="form-control">
+                    <!-- Опции будут добавлены динамически -->
+                </select>
+            </div>
+            <div class="form-group" id="control-qubit-group">
+                <label class="form-label">Управляющий кубит</label>
+                <select id="control-qubit" class="form-control">
+                    <!-- Опции будут добавлены динамически -->
+                </select>
+            </div>
+            <div class="form-group" id="angle-input-group" style="display: none;">
+                <label class="form-label">Угол (радианы)</label>
+                <input type="number" id="gate-angle" class="form-control" value="0" step="0.1">
+            </div>
+            <button class="btn" onclick="applyControlledGate()" style="width: 100%;">
+                <i class="fas fa-check"></i> Применить
+            </button>
+        </div>
+    </div>
+
+    <!-- Модальное окно измерения -->
+    <div id="measure-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Измерение кубита</div>
+                <button class="modal-close" onclick="hideMeasureModal()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Кубит для измерения</label>
+                <select id="measure-qubit" class="form-control">
+                    <!-- Опции будут добавлены динамически -->
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Количество измерений</label>
+                <input type="number" id="measure-count" class="form-control" value="1024" min="1" max="100000">
+            </div>
+            <button class="btn" onclick="performMeasurement()" style="width: 100%;">
+            <i class="fas fa-ruler"></i> Измерить
+        </button>
+    </div>
+</div>
+
+<div style="text-align: center; margin-top: 20px; padding: 10px; color: var(--nc-tx-2); font-size: 12px;">
+    QuantumX Production v3.0 | © 2023 Квантовые вычисления
+</div>
+
+<script>
+    // ==================== Глобальные переменные ====================
+    let quantumSimulator;
+    let chemistryModule;
+    let currentTheme = 'dark';
+    let updateInterval = 1000;
+    let circuitOperations = [];
+    let measurementResults = {};
+    let noiseSettings = {
+        t1: 100,
+        t2: 70,
+        depolarizing: 0.001,
+        crosstalk: 0.05,
+        thermal: 0.01
+    };
+
+    // ==================== Инициализация приложения ====================
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Инициализация симулятора (5 кубитов по умолчанию)
+        initQuantumSimulator(5);
+        chemistryModule = new QuantumChemistryModule();
+        
+        // Инициализация графиков
+        initCharts();
+        
+        // Инициализация 3D визуализации
+        initQuantumVisualization();
+        
+        // Настройка обработчиков событий
+        setupEventHandlers();
+        
+        // Обновление времени
+        updateClock();
+        setInterval(updateClock, 1000);
+        
+        // Основной цикл обновления
+        setInterval(updateAllMetrics, updateInterval);
+        
+        // Инициализация управления шумами
+        initNoiseControls();
+    });
+
+    function initQuantumSimulator(numQubits) {
+        quantumSimulator = new QuantumSimulator(numQubits);
+        updateQubitSelectors();
+        updateNoiseModel();
+    }
+
+    // ==================== Квантовый симулятор ====================
+    class QuantumSimulator {
+        constructor(numQubits) {
+            this.numQubits = numQubits;
+            this.dim = 1 << numQubits;
+            this.state = new Array(this.dim).fill(math.complex(0, 0));
+            this.state[0] = math.complex(1, 0); // Начальное состояние |0...0⟩
+            this.noiseModel = new AdvancedNoiseModel(numQubits);
+            this.entanglementGraph = this._initEntanglementGraph();
+            this.gateHistory = [];
+            this.measurementHistory = [];
+            this.metrics = {
+                qubitError: 0.0001,
+                gateFidelity: 0.999,
+                entanglementEntropy: 0,
+                coherenceTime: 100,
+                lastOperationTime: 0
+            };
+        }
+
+        _initEntanglementGraph() {
+            const graph = {};
+            for (let i = 0; i < this.numQubits; i++) {
+                graph[i] = new Set();
+            }
+            return graph;
+        }
+
+        applyGate(gate, ...qubits) {
+            const startTime = performance.now();
+            
+            // Применяем гейт к состоянию
+            const gateMatrix = this._getGateMatrix(gate, qubits);
+            this._applyGateMatrix(gateMatrix, qubits);
+            
+            // Обновляем граф запутанности
+            if (gate === 'cx' || gate === 'cz') {
+                const [control, target] = qubits;
+                this.entanglementGraph[control].add(target);
+                this.entanglementGraph[target].add(control);
+            }
+            
+            // Применяем шумы
+            this.noiseModel.apply(this.state, qubits);
+            
+            // Обновляем метрики
+            this._updateMetrics(gate, performance.now() - startTime);
+            this.gateHistory.push({gate, qubits, time: Date.now()});
+            
+            // Добавляем операцию в схему
+            circuitOperations.push({gate, qubits});
+            updateCircuitDisplay();
+        }
+
+        _getGateMatrix(gate, qubits) {
+            // Реализация матриц основных квантовых гейтов
+            const matrices = {
+                'h': math.multiply(1/math.sqrt(2), math.matrix([[1, 1], [1, -1]])),
+                'x': math.matrix([[0, 1], [1, 0]]),
+                'y': math.matrix([[0, math.multiply(-1, math.i)], [math.i, 0]]),
+                'z': math.matrix([[1, 0], [0, -1]]),
+                'cx': this._buildControlledGate(math.matrix([[0, 1], [1, 0]]), qubits), // CNOT
+                'cz': this._buildControlledGate(math.matrix([[1, 0], [0, -1]]), qubits) // CZ
+            };
+            return matrices[gate];
+        }
+
+        _buildControlledGate(targetMatrix, [control, target]) {
+            const n = this.numQubits;
+            const dim = 1 << n;
+            const matrix = math.zeros(dim, dim);
+            
+            // Проходим по всем базисным состояниям
+            for (let i = 0; i < dim; i++) {
+                const controlBit = (i >> (n - 1 - control)) & 1;
+                
+                if (controlBit === 1) {
+                    // Если контрольный кубит в |1⟩, применяем целевой гейт
+                    const targetBit = (i >> (n - 1 - target)) & 1;
+                    const newState = i ^ (targetBit << (n - 1 - target)) ^ 
+                                    ((1 - targetBit) << (n - 1 - target));
+                    
+                    for (let j = 0; j < dim; j++) {
+                        const targetBitJ = (j >> (n - 1 - target)) & 1;
+                        const newStateJ = j ^ (targetBitJ << (n - 1 - target)) ^ 
+                                         ((1 - targetBitJ) << (n - 1 - target));
+                        
+                        matrix.set([i, j], targetMatrix.get([targetBit, targetBitJ]));
+                    }
+                } else {
+                    // Если контрольный кубит в |0⟩, оставляем состояние без изменений
+                    matrix.set([i, i], 1);
+                }
+            }
+            
+            return matrix;
+        }
+
+        _applyGateMatrix(matrix, qubits) {
+            // Преобразуем состояние в вектор
+            const stateVector = math.matrix(this.state.map(c => [c]));
+            
+            // Применяем матрицу гейта
+            const newState = math.multiply(matrix, stateVector);
+            
+            // Обновляем состояние
+            for (let i = 0; i < this.dim; i++) {
+                this.state[i] = newState.get([i, 0]);
+            }
+        }
+
+        measure(qubit, shots = 1) {
+            const results = {0: 0, 1: 0};
+            
+            for (let i = 0; i < shots; i++) {
+                // Проективное измерение кубита
+                const prob0 = this._getProbability(qubit, 0);
+                const outcome = Math.random() < prob0 ? 0 : 1;
+                results[outcome]++;
+                
+                // Коллапс состояния
+                this._collapseState(qubit, outcome);
+            }
+            
+            // Сохраняем результаты
+            this.measurementHistory.push({qubit, results, time: Date.now()});
+            return results;
+        }
+
+        _getProbability(qubit, value) {
+            // Вычисление вероятности измерения value на qubit
+            let prob = 0;
+            const mask = 1 << (this.numQubits - 1 - qubit);
+            
+            for (let i = 0; i < this.dim; i++) {
+                if ((i & mask) === (value << (this.numQubits - 1 - qubit))) {
+                    prob += math.pow(math.abs(this.state[i]), 2);
+                }
+            }
+            return prob;
+        }
+
+        _collapseState(qubit, value) {
+            // Коллапс волновой функции после измерения
+            const mask = 1 << (this.numQubits - 1 - qubit);
+            
+            for (let i = 0; i < this.dim; i++) {
+                if ((i & mask) !== (value << (this.numQubits - 1 - qubit))) {
+                    this.state[i] = math.complex(0, 0);
+                }
+            }
+            
+            // Нормализация состояния
+            this._normalize();
+        }
+
+        _normalize() {
+            let norm = 0;
+            for (const amp of this.state) {
+                norm += math.pow(math.abs(amp), 2);
+            }
+            norm = math.sqrt(norm);
+            
+            for (let i = 0; i < this.state.length; i++) {
+                this.state[i] = math.divide(this.state[i], norm);
+            }
+        }
+
+        _updateMetrics(gate, duration) {
+            // Обновление метрик на основе выполненных операций
+            const baseError = this.noiseModel.getBaseErrorRate();
+            
+            // Обновление ошибки кубитов
+            this.metrics.qubitError = baseError * (1 + 0.1 * Math.random());
+            
+            // Обновление фиделитета гейтов
+            const gateComplexity = {'h': 1, 'x': 1, 'y': 1, 'z': 1, 'cx': 2, 'cz': 2};
+            this.metrics.gateFidelity = Math.max(0.9, 
+                1 - this.metrics.qubitError * gateComplexity[gate]);
+            
+            // Расчет энтропии запутанности
+            this.metrics.entanglementEntropy = this._calculateEntanglementEntropy();
+            
+            // Время когерентности
+            this.metrics.coherenceTime = Math.max(10, 
+                this.metrics.coherenceTime - duration / 1000);
+            
+            // Время последней операции
+            this.metrics.lastOperationTime = duration;
+        }
+
+        _calculateEntanglementEntropy() {
+            if (this.numQubits < 2) return 0;
+            
+            // Разделение системы на две части
+            const split = Math.floor(this.numQubits / 2);
+            const dimA = 1 << split;
+            const dimB = 1 << (this.numQubits - split);
+            
+            // Построение матрицы плотности
+            const densityMatrix = math.multiply(
+                math.transpose(math.matrix([this.state])),
+                math.matrix([this.state])
+            );
+            
+            // Вычисление частичного следа
+            const reducedDensity = math.zeros(dimA, dimA);
+            for (let i = 0; i < dimA; i++) {
+                for (let j = 0; j < dimA; j++) {
+                    let sum = 0;
+                    for (let k = 0; k < dimB; k++) {
+                        sum += densityMatrix.get([i * dimB + k, j * dimB + k]);
+                    }
+                    reducedDensity.set([i, j], sum);
+                }
+            }
+            
+            // Расчет энтропии фон Неймана
+            const eigen = math.eig(reducedDensity);
+            let entropy = 0;
+            for (let val of eigen.values) {
+                if (val > 1e-10) {
+                    entropy -= val * math.log2(val);
+                }
+            }
+            return entropy;
+        }
+
+        getMetrics() {
+            return {
+                ...this.metrics,
+                emulationSpeed: this._calculateEmulationSpeed(),
+                stateVector: [...this.state],
+                probabilities: this._calculateProbabilities()
+            };
+        }
+
+        _calculateEmulationSpeed() {
+            if (this.gateHistory.length < 2) return 0;
+            const lastGate = this.gateHistory[this.gateHistory.length - 1];
+            const firstGate = this.gateHistory[0];
+            const timeDiff = (lastGate.time - firstGate.time) / 1000;
+            return timeDiff > 0 ? this.gateHistory.length / timeDiff : 0;
+        }
+
+        _calculateProbabilities() {
+            return this.state.map(amplitude => 
+                math.pow(math.norm(amplitude), 2));
+        }
+
+        reset() {
+            this.state = new Array(this.dim).fill(math.complex(0, 0));
+            this.state[0] = math.complex(1, 0);
+            this.gateHistory = [];
+            this.measurementHistory = [];
+            this.entanglementGraph = this._initEntanglementGraph();
+            this.metrics = {
+                qubitError: 0.0001,
+                gateFidelity: 0.999,
+                entanglementEntropy: 0,
+                coherenceTime: 100,
+                lastOperationTime: 0
+            };
+            circuitOperations = [];
+            measurementResults = {};
+            updateCircuitDisplay();
+        }
+    }
+
+    class AdvancedNoiseModel {
+        constructor(numQubits) {
+            this.numQubits = numQubits;
+            this.t1 = noiseSettings.t1;
+            this.t2 = noiseSettings.t2;
+            this.depolarizingProb = noiseSettings.depolarizing;
+            this.crosstalkFactor = noiseSettings.crosstalk;
+            this.thermalExcitation = noiseSettings.thermal;
+        }
+
+        apply(state, qubits) {
+            this._applyAmplitudeDamping(state);
+            this._applyPhaseDamping(state);
+            this._applyDepolarizingNoise(state, qubits);
+            this._applyCrosstalk(state, qubits);
+            this._applyThermalNoise(state);
+        }
+
+        _applyAmplitudeDamping(state) {
+            const prob = 1 - Math.exp(-1 / this.t1);
+            for (let i = 0; i < state.length; i++) {
+                if (i !== 0) {
+                    state[i] = math.multiply(state[i], math.sqrt(1 - prob));
+                }
+            }
+        }
+
+        _applyPhaseDamping(state) {
+            const prob = 1 - Math.exp(-1 / this.t2);
+            for (let i = 0; i < state.length; i++) {
+                if (i !== 0) {
+                    const phaseNoise = math.exp(math.multiply(math.complex(0, 1), 
+                        (Math.random() - 0.5) * prob));
+                    state[i] = math.multiply(state[i], phaseNoise);
+                }
+            }
+        }
+
+        _applyDepolarizingNoise(state, qubits) {
+            if (Math.random() < this.depolarizingProb * qubits.length) {
+                const errorType = Math.floor(Math.random() * 3);
+                const errorGate = ['x', 'y', 'z'][errorType];
+                this._applySingleQubitError(state, errorGate, qubits[0]);
+            }
+        }
+
+        _applyCrosstalk(state, qubits) {
+            if (qubits.length === 1 && Math.random() < this.crosstalkFactor) {
+                const target = (qubits[0] + 1) % this.numQubits;
+                this._applySingleQubitError(state, 'x', target);
+            }
+        }
+
+        _applyThermalNoise(state) {
+            if (Math.random() < this.thermalExcitation) {
+                const qubit = Math.floor(Math.random() * this.numQubits);
+                this._applySingleQubitError(state, 'x', qubit);
+            }
+        }
+
+        _applySingleQubitError(state, gate, qubit) {
+            const gateMatrix = {
+                'x': math.matrix([[0, 1], [1, 0]]),
+                'y': math.matrix([[0, math.multiply(-1, math.i)], [math.i, 0]]),
+                'z': math.matrix([[1, 0], [0, -1]])
+            }[gate];
+            
+            const operation = math.kron(
+                math.identity(math.pow(2, qubit)),
+                math.kron(
+                    gateMatrix,
+                    math.identity(math.pow(2, this.numQubits - qubit - 1)))
+            );
+            
+            const newState = math.multiply(operation, math.matrix(state.map(c => [c])));
+            for (let i = 0; i < state.length; i++) {
+                state[i] = newState.get([i, 0]);
+            }
+        }
+
+        getBaseErrorRate() {
+            return 0.0005 * (1 / this.t1 + 1 / this.t2) + this.depolarizingProb;
+        }
+
+        updateSettings(settings) {
+            this.t1 = settings.t1;
+            this.t2 = settings.t2;
+            this.depolarizingProb = settings.depolarizing;
+            this.crosstalkFactor = settings.crosstalk;
+            this.thermalExcitation = settings.thermal;
+        }
+    }
+
+    // ==================== Модуль квантовой химии ====================
+    class QuantumChemistryModule {
+        constructor() {
+            this.molecules = {
+                'h2': this._createH2(),
+                'h2o': this._createH2O(),
+                'co2': this._createCO2(),
+                'ch4': this._createCH4(),
+                'c6h6': this._createC6H6()
+            };
+            this.basisSets = ['sto-3g', '6-31g', 'cc-pvdz'];
+            this.currentMolecule = null;
+            this.currentBasis = 'sto-3g';
+            this.calculationHistory = [];
+        }
+
+        _createH2() {
+            return {
+                name: "Молекула водорода",
+                formula: "H₂",
+                atoms: [
+                    {symbol: "H", x: 0.0, y: 0.0, z: 0.0},
+                    {symbol: "H", x: 0.74, y: 0.0, z: 0.0}
+                ],
+                energies: {
+                    fci: -1.1015,
+                    vqe: -1.0987,
+                    hf: -1.0666
+                },
+                dipoleMoment: 0.0
+            };
+        }
+
+        _createH2O() {
+            return {
+                name: "Вода",
+                formula: "H₂O",
+                atoms: [
+                    {symbol: "O", x: 0.0, y: 0.0, z: 0.0},
+                    {symbol: "H", x: 0.957, y: 0.0, z: 0.0},
+                    {symbol: "H", x: -0.24, y: 0.927, z: 0.0}
+                ],
+                energies: {
+                    fci: -76.2419,
+                    vqe: -76.2385,
+                    hf: -76.0270
+                },
+                dipoleMoment: 1.85
+            };
+        }
+
+        _createCO2() {
+            return {
+                name: "Диоксид углерода",
+                formula: "CO₂",
+                atoms: [
+                    {symbol: "C", x: 0.0, y: 0.0, z: 0.0},
+                    {symbol: "O", x: -1.16, y: 0.0, z: 0.0},
+                    {symbol: "O", x: 1.16, y: 0.0, z: 0.0}
+                ],
+                energies: {
+                    fci: -187.998,
+                    vqe: -187.992,
+                    hf: -187.653
+                },
+                dipoleMoment: 0.0
+            };
+        }
+
+        _createCH4() {
+            return {
+                name: "Метан",
+                formula: "CH₄",
+                atoms: [
+                    {symbol: "C", x: 0.0, y: 0.0, z: 0.0},
+                    {symbol: "H", x: 0.63, y: 0.63, z: 0.63},
+                    {symbol: "H", x: -0.63, y: -0.63, z: 0.63},
+                    {symbol: "H", x: 0.63, y: -0.63, z: -0.63},
+                    {symbol: "H", x: -0.63, y: 0.63, z: -0.63}
+                ],
+                energies: {
+                    fci: -40.201,
+                    vqe: -40.198,
+                    hf: -40.012
+                },
+                dipoleMoment: 0.0
+            };
+        }
+
+        _createC6H6() {
+            return {
+                name: "Бензол",
+                formula: "C₆H₆",
+                atoms: [
+                    {symbol: "C", x: 1.39, y: 0.0, z: 0.0},
+                    {symbol: "C", x: 0.69, y: 1.20, z: 0.0},
+                    {symbol: "C", x: -0.69, y: 1.20, z: 0.0},
+                    {symbol: "C", x: -1.39, y: 0.0, z: 0.0},
+                    {symbol: "C", x: -0.69, y: -1.20, z: 0.0},
+                    {symbol: "C", x: 0.69, y: -1.20, z: 0.0},
+                    {symbol: "H", x: 2.47, y: 0.0, z: 0.0},
+                    {symbol: "H", x: 1.23, y: 2.13, z: 0.0},
+                    {symbol: "H", x: -1.23, y: 2.13, z: 0.0},
+                    {symbol: "H", x: -2.47, y: 0.0, z: 0.0},
+                    {symbol: "H", x: -1.23, y: -2.13, z: 0.0},
+                    {symbol: "H", x: 1.23, y: -2.13, z: 0.0}
+                ],
+                energies: {
+                    fci: -230.722,
+                    vqe: -230.718,
+                    hf: -230.321
+                },
+                dipoleMoment: 0.0
+            };
+        }
+
+        loadMolecule(moleculeId) {
+            this.currentMolecule = this.molecules[moleculeId];
+            return this.currentMolecule;
+        }
+
+        setBasisSet(basis) {
+            if (this.basisSets.includes(basis)) {
+                this.currentBasis = basis;
+                return true;
+            }
+            return false;
+        }
+
+        calculateHartreeFock() {
+            if (!this.currentMolecule) return null;
+            
+            // Эмуляция расчета Хартри-Фока
+            const startTime = Date.now();
+            const energies = {...this.currentMolecule.energies};
+            const orbitals = this._generateOrbitals();
+            const duration = Date.now() - startTime;
+            
+            // Добавляем в историю расчетов
+            this.calculationHistory.push({
+                type: 'HF',
+                basis: this.currentBasis,
+                energy: energies.hf,
+                duration,
+                timestamp: new Date()
+            });
+            
+            return {
+                energies,
+                orbitals,
+                basis: this.currentBasis,
+                duration,
+                success: true
+            };
+        }
+
+        runVQE(ansatz = 'UCCSD', iterations = 100) {
+            if (!this.currentMolecule) return null;
+            
+            // Эмуляция VQE расчета
+            const startTime = Date.now();
+            let energy = this.currentMolecule.energies.vqe;
+            let history = [];
+            
+            // Добавляем шум к результату
+            energy += (Math.random() - 0.5) * 0.01;
+            
+            // Генерируем историю сходимости
+            for (let i = 0; i < iterations; i++) {
+                history.push({
+                    iteration: i,
+                    energy: energy - (energy - this.currentMolecule.energies.fci) * 
+                           Math.exp(-i / (iterations / 5))
+                });
+            }
+            
+            const finalEnergy = history[history.length - 1].energy;
+            const duration = Date.now() - startTime;
+            
+            // Добавляем в историю расчетов
+            this.calculationHistory.push({
+                type: 'VQE',
+                basis: this.currentBasis,
+                ansatz,
+                energy: finalEnergy,
+                duration,
+                iterations,
+                timestamp: new Date()
+            });
+            
+            return {
+                energy: finalEnergy,
+                history,
+                ansatz,
+                basis: this.currentBasis,
+                duration,
+                success: true
+            };
+        }
+
+        _generateOrbitals() {
+            const numAtoms = this.currentMolecule.atoms.length;
+            const orbitals = [];
+            
+            for (let i = 0; i < numAtoms * 2; i++) {
+                orbitals.push({
+                    energy: -1.0 - i * 0.3 + Math.random() * 0.1,
+                    coefficients: Array(numAtoms).fill(0).map(
+                        (_, j) => (j === i % numAtoms ? 0.8 : 0.1 + Math.random() * 0.05)
+                    )
+                });
+            }
+            
+            return orbitals.sort((a, b) => a.energy - b.energy);
+        }
+
+        getDipoleMoment() {
+            if (!this.currentMolecule) return null;
+            return this.currentMolecule.dipoleMoment;
+        }
+
+        getCalculationHistory() {
+            return [...this.calculationHistory];
+        }
+
+        addCustomMolecule(name, formula, atoms, charge = 0, multiplicity = 1) {
+            const id = formula.toLowerCase().replace(/[₀₁₂₃₄₅₆₇₈₉]/g, 
+                m => '0123456789'['₀₁₂₃₄₅₆₇₈₉'.indexOf(m)]);
+            
+            // Простая оценка энергии (для демонстрации)
+            const energyBase = atoms.length * -1.0;
+            const energies = {
+                fci: energyBase - 0.1,
+                vqe: energyBase - 0.08,
+                hf: energyBase - 0.05
+            };
+            
+            this.molecules[id] = {
+                name,
+                formula,
+                atoms,
+                energies,
+                dipoleMoment: this._calculateDipoleMoment(atoms)
+            };
+            
+            return id;
+        }
+
+        _calculateDipoleMoment(atoms) {
+            let dipole = {x: 0, y: 0, z: 0};
+            const charges = {
+                'H': 0.4,
+                'C': -0.2,
+                'O': -0.6,
+                'N': -0.5
+            };
+            
+            for (const atom of atoms) {
+                const charge = charges[atom.symbol] || 0;
+                dipole.x += atom.x * charge;
+                dipole.y += atom.y * charge;
+                dipole.z += atom.z * charge;
+            }
+            
+            return Math.sqrt(dipole.x**2 + dipole.y**2 + dipole.z**2);
+        }
+    }
+
+    // ==================== Визуализация и UI ====================
+    function initCharts() {
+        // График производительности
+        const realTimeCtx = document.getElementById('real-time-chart').getContext('2d');
+        window.realTimeChart = new Chart(realTimeCtx, {
+            type: 'line',
+            data: {
+                labels: Array(10).fill(''),
+                datasets: [
+                    {
+                        label: 'Ошибка кубитов (x1000)',
+                        data: Array(10).fill(0),
+                        borderColor: '#ff3b30',
+                        backgroundColor: 'rgba(255, 59, 48, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true
+                    },
+                    {
+                        label: 'Скорость эмуляции (q/сек)',
+                        data: Array(10).fill(0),
+                        borderColor: '#34c759',
+                        backgroundColor: 'rgba(52, 199, 89, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true
+                    }
+                ]
+            },
+            options: getChartOptions()
+        });
+
+        // Круговая диаграмма квантового состояния
+        const quantumStateCtx = document.getElementById('quantum-state-chart').getContext('2d');
+        window.quantumStateChart = new Chart(quantumStateCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Запутанность', 'Суперпозиция', 'Шум'],
+                datasets: [{
+                    data: [45, 35, 20],
+                    backgroundColor: ['#007aff', '#5856d6', '#ff2d55'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                ...getChartOptions(),
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            color: '#ffffff',
+                            font: {
+                                size: 10
+                            }
+                        }
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+
+        // График энергии молекулы
+        const moleculeEnergyCtx = document.getElementById('molecule-energy-chart').getContext('2d');
+        window.moleculeEnergyChart = new Chart(moleculeEnergyCtx, {
+            type: 'bar',
+            data: {
+                labels: ['FCI', 'VQE', 'HF'],
+                datasets: [{
+                    label: 'Энергия (Ha)',
+                    data: [0, 0, 0],
+                    backgroundColor: ['#007aff', '#34c759', '#ff9500'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                ...getChartOptions(),
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    }
+
+    function getChartOptions() {
+        return {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                duration: 0
+            },
+            elements: {
+                point: {
+                    radius: 0
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        color: '#ffffff',
+                        font: {
+                            size: 10
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        color: 'rgba(255,255,255,0.1)'
+                    },
+                    ticks: {
+                        color: '#aaaaaa',
+                        font: {
+                            size: 10
+                        }
+                    }
+                },
+                y: {
+                    grid: {
+                        color: 'rgba(255,255,255,0.1)'
+                    },
+                    ticks: {
+                        color: '#aaaaaa',
+                        font: {
+                            size: 10
+                        }
+                    },
+                    beginAtZero: true
+                }
+            }
+        };
+    }
+
+    function initQuantumVisualization() {
+        const container = document.getElementById('quantum-visualization');
+        if (!container) return;
+        
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+
+        // Сцена
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x2a2a2a);
+        
+        // Камера
+        const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+        camera.position.z = 5;
+        
+        // Рендерер
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(width, height);
+        container.appendChild(renderer.domElement);
+        
+        // Сфера (представление кубита)
+        const geometry = new THREE.SphereGeometry(1, 32, 32);
+        const material = new THREE.MeshBasicMaterial({ 
+            color: 0x007aff,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.8
+        });
+        const sphere = new THREE.Mesh(geometry, material);
+        scene.add(sphere);
+        
+        // Анимация
+        function animate() {
+            requestAnimationFrame(animate);
+            sphere.rotation.x += 0.005;
+            sphere.rotation.y += 0.01;
+            renderer.render(scene, camera);
+        }
+        animate();
+        
+        // Обработчик изменения размера
+        window.addEventListener('resize', () => {
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+        });
+    }
+
+    function updateMoleculeView(molecule) {
+        const viewer = document.getElementById('molecule-viewer');
+        viewer.innerHTML = `
+            <h3>${molecule.name} (${molecule.formula})</h3>
+            <div class="molecule-structure">
+                ${molecule.atoms.map(atom => `
+                    <div class="atom" data-element="${atom.symbol}" 
+                         style="transform: translate3d(${atom.x * 50}px, ${atom.y * 50}px, ${atom.z * 50}px)">
+                        ${atom.symbol}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        
+        // Добавляем связи между атомами
+        setTimeout(() => {
+            addBondsToViewer(molecule);
+        }, 100);
+    }
+
+    function addBondsToViewer(molecule) {
+        const viewer = document.querySelector('.molecule-structure');
+        if (!viewer) return;
+        
+        const atoms = viewer.querySelectorAll('.atom');
+        const bonds = [];
+        
+        // Простой алгоритм определения связей (для демонстрации)
+        for (let i = 0; i < molecule.atoms.length; i++) {
+            for (let j = i + 1; j < molecule.atoms.length; j++) {
+                const a1 = molecule.atoms[i];
+                const a2 = molecule.atoms[j];
+                const dist = Math.sqrt(
+                    Math.pow(a1.x - a2.x, 2) + 
+                    Math.pow(a1.y - a2.y, 2) + 
+                    Math.pow(a1.z - a2.z, 2)
+                );
+                
+                // Определяем, есть ли связь (простая эвристика)
+                const bondLengths = {
+                    'HH': 0.74,
+                    'CH': 1.09,
+                    'CC': 1.54,
+                    'CO': 1.43,
+                    'OH': 0.96
+                };
+                
+                const key = [a1.symbol, a2.symbol].sort().join('');
+                const maxBondDist = bondLengths[key] || 1.8;
+                
+                if (dist <= maxBondDist * 1.2) {
+                    bonds.push({i, j, dist});
+                }
+            }
+        }
+        
+        // Создаем элементы связей
+        bonds.forEach(bond => {
+            const atom1 = atoms[bond.i];
+            const atom2 = atoms[bond.j];
+            
+            const rect1 = atom1.getBoundingClientRect();
+            const rect2 = atom2.getBoundingClientRect();
+            
+            const x1 = rect1.left + rect1.width/2 - viewer.getBoundingClientRect().left;
+            const y1 = rect1.top + rect1.height/2 - viewer.getBoundingClientRect().top;
+            const x2 = rect2.left + rect2.width/2 - viewer.getBoundingClientRect().left;
+            const y2 = rect2.top + rect2.height/2 - viewer.getBoundingClientRect().top;
+            
+            const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+            const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+            
+            const bondElement = document.createElement('div');
+            bondElement.className = 'bond';
+            bondElement.style.width = `${length}px`;
+            bondElement.style.left = `${x1}px`;
+            bondElement.style.top = `${y1}px`;
+            bondElement.style.transform = `rotate(${angle}deg)`;
+            
+            viewer.appendChild(bondElement);
+        });
+    }
+
+    // ==================== Обработчики событий ====================
+        function setupEventHandlers() {
+            // Квантовые операции
+            document.getElementById('rotate-keys-btn').addEventListener('click', rotateKeys);
+            
+            // Управление шумами
+            document.getElementById('noise-level-slider').addEventListener('input', (e) => {
+                const value = e.target.value;
+                document.getElementById('noise-level-value').textContent = `${value}%`;
+                quantumSimulator.noiseModel.t1 = 100 * (1 - value/200);
+                quantumSimulator.noiseModel.t2 = 70 * (1 - value/200);
+            });
+            
+            // Молекулярные расчеты
+            document.getElementById('molecule-select').addEventListener('change', loadMolecule);
+            document.getElementById('basis-set-select').addEventListener('change', updateBasisSet);
+            
+            // Настройки системы
+            document.getElementById('system-theme').addEventListener('change', changeTheme);
+            document.getElementById('update-interval').addEventListener('change', updateRefreshInterval);
+        }
+
+        function updateQubitCount() {
+            const count = parseInt(document.getElementById('qubit-count-select').value);
+            initQuantumSimulator(count);
+            updateQubitSelectors();
+        }
+
+        function updateQubitSelectors() {
+            const qubitOptions = Array.from({length: quantumSimulator.numQubits}, (_, i) => 
+                `<option value="${i}">Кубит ${i}</option>`).join('');
+            
+            // Обновляем все селекторы кубитов
+            document.querySelectorAll('#target-qubit, #control-qubit, #measure-qubit').forEach(select => {
+                select.innerHTML = qubitOptions;
+            });
+        }
+
+        function updateNoiseModel() {
+            const model = document.getElementById('noise-model-select').value;
+            switch(model) {
+                case 'basic':
+                    quantumSimulator.noiseModel.updateSettings({
+                        t1: 100,
+                        t2: 70,
+                        depolarizing: 0.001,
+                        crosstalk: 0.01,
+                        thermal: 0.005
+                    });
+                    break;
+                case 'advanced':
+                    quantumSimulator.noiseModel.updateSettings({
+                        t1: 50,
+                        t2: 40,
+                        depolarizing: 0.005,
+                        crosstalk: 0.05,
+                        thermal: 0.02
+                    });
+                    break;
+                case 'none':
+                    quantumSimulator.noiseModel.updateSettings({
+                        t1: 1e6,
+                        t2: 1e6,
+                        depolarizing: 0,
+                        crosstalk: 0,
+                        thermal: 0
+                    });
+                    break;
+            }
+        }
+
+        function initNoiseControls() {
+            const controlsContainer = document.getElementById('noise-controls');
+            controlsContainer.innerHTML = `
+                <div class="noise-control-group">
+                    <div class="noise-control-title">Амплитудное демпфирование (T1)</div>
+                    <input type="range" id="t1-slider" min="1" max="200" value="${noiseSettings.t1}" class="form-control">
+                    <div style="text-align: center; margin-top: 5px;">
+                        <span id="t1-value">${noiseSettings.t1} мкс</span>
+                    </div>
+                </div>
+                <div class="noise-control-group">
+                    <div class="noise-control-title">Фазовое демпфирование (T2)</div>
+                    <input type="range" id="t2-slider" min="1" max="200" value="${noiseSettings.t2}" class="form-control">
+                    <div style="text-align: center; margin-top: 5px;">
+                        <span id="t2-value">${noiseSettings.t2} мкс</span>
+                    </div>
+                </div>
+                <div class="noise-control-group">
+                    <div class="noise-control-title">Деполяризующий шум</div>
+                    <input type="range" id="depolarizing-slider" min="0" max="100" value="${noiseSettings.depolarizing * 1000}" class="form-control">
+                    <div style="text-align: center; margin-top: 5px;">
+                        <span id="depolarizing-value">${(noiseSettings.depolarizing * 100).toFixed(1)}%</span>
+                    </div>
+                </div>
+                <div class="noise-control-group">
+                    <div class="noise-control-title">Кросс-толк</div>
+                    <input type="range" id="crosstalk-slider" min="0" max="100" value="${noiseSettings.crosstalk * 100}" class="form-control">
+                    <div style="text-align: center; margin-top: 5px;">
+                        <span id="crosstalk-value">${(noiseSettings.crosstalk * 100).toFixed(1)}%</span>
+                    </div>
+                </div>
+                <div class="noise-control-group">
+                    <div class="noise-control-title">Тепловое возбуждение</div>
+                    <input type="range" id="thermal-slider" min="0" max="100" value="${noiseSettings.thermal * 1000}" class="form-control">
+                    <div style="text-align: center; margin-top: 5px;">
+                        <span id="thermal-value">${(noiseSettings.thermal * 100).toFixed(2)}%</span>
+                    </div>
+                </div>
+            `;
+            
+            // Настройка обработчиков для слайдеров
+            document.getElementById('t1-slider').addEventListener('input', (e) => {
+                const value = e.target.value;
+                document.getElementById('t1-value').textContent = `${value} мкс`;
+                noiseSettings.t1 = parseInt(value);
+                quantumSimulator.noiseModel.t1 = parseInt(value);
+            });
+            
+            document.getElementById('t2-slider').addEventListener('input', (e) => {
+                const value = e.target.value;
+                document.getElementById('t2-value').textContent = `${value} мкс`;
+                noiseSettings.t2 = parseInt(value);
+                quantumSimulator.noiseModel.t2 = parseInt(value);
+            });
+            
+            document.getElementById('depolarizing-slider').addEventListener('input', (e) => {
+                const value = e.target.value / 1000;
+                document.getElementById('depolarizing-value').textContent = `${(value * 100).toFixed(1)}%`;
+                noiseSettings.depolarizing = value;
+                quantumSimulator.noiseModel.depolarizingProb = value;
+            });
+            
+            document.getElementById('crosstalk-slider').addEventListener('input', (e) => {
+                const value = e.target.value / 100;
+                document.getElementById('crosstalk-value').textContent = `${(value * 100).toFixed(1)}%`;
+                noiseSettings.crosstalk = value;
+                quantumSimulator.noiseModel.crosstalkFactor = value;
+            });
+            
+            document.getElementById('thermal-slider').addEventListener('input', (e) => {
+                const value = e.target.value / 1000;
+                document.getElementById('thermal-value').textContent = `${(value * 100).toFixed(2)}%`;
+                noiseSettings.thermal = value;
+                quantumSimulator.noiseModel.thermalExcitation = value;
+            });
+        }
+
+        // ==================== Основные функции ====================
+        function updateAllMetrics() {
+            updateSystemMetrics();
+            updateQuantumMetrics();
+            updateSecurityMetrics();
+            
+            // Обновляем отображение состояния
+            updateStateDisplay();
+        }
+
+        function updateSystemMetrics() {
+            // Реальные метрики системы
+            const cpuUsage = performance.now() % 100;
+            const memoryUsage = (performance.now() / 10) % 100;
+            const cpuTemp = 40 + (performance.now() / 1000) % 40;
+            
+            document.getElementById('cpu-usage-text').textContent = `${cpuUsage.toFixed(1)}%`;
+            document.getElementById('cpu-usage').style.width = `${cpuUsage}%`;
+            
+            document.getElementById('memory-usage-text').textContent = `${memoryUsage.toFixed(1)}%`;
+            document.getElementById('memory-usage').style.width = `${memoryUsage}%`;
+            
+            document.getElementById('cpu-temp-text').textContent = `${cpuTemp.toFixed(1)}°C`;
+            const tempWidth = Math.min(100, cpuTemp);
+            document.getElementById('cpu-temp').style.width = `${tempWidth}%`;
+            
+            // Цвет индикатора температуры
+            const tempBar = document.getElementById('cpu-temp');
+            if (cpuTemp > 80) {
+                tempBar.style.background = '#ff3b30';
+            } else if (cpuTemp > 60) {
+                tempBar.style.background = '#ff9500';
+            } else {
+                tempBar.style.background = '#34c759';
+            }
+        }
+
+        function updateQuantumMetrics() {
+            if (!quantumSimulator) return;
+            
+            const metrics = quantumSimulator.getMetrics();
+            
+            // Обновляем UI метриками
+            document.getElementById('qubit-error-value').textContent = 
+                metrics.qubitError.toFixed(6);
+            document.getElementById('gate-fidelity-value').textContent = 
+                metrics.gateFidelity.toFixed(4);
+            document.getElementById('emulation-speed').textContent = 
+                `${metrics.emulationSpeed.toFixed(0)} q/сек`;
+            document.getElementById('state-entropy-value').textContent = 
+                metrics.entanglementEntropy.toFixed(4);
+            document.getElementById('state-entropy-bar').style.width = 
+                `${Math.min(100, metrics.entanglementEntropy * 50)}%`;
+            
+            // Обновляем графики
+            updateRealTimeChart(metrics);
+            updateQuantumStateChart(metrics);
+        }
+
+        function updateStateDisplay() {
+            if (!quantumSimulator) return;
+            
+            const state = quantumSimulator.state;
+            const probabilities = quantumSimulator._calculateProbabilities();
+            
+            // Отображаем вектор состояния
+            const stateVectorHtml = state.map((amplitude, i) => {
+                const stateLabel = i.toString(2).padStart(quantumSimulator.numQubits, '0');
+                const amplitudeStr = math.format(amplitude, {precision: 4});
+                return `
+                    <div class="state-entry">
+                        <span class="state-label">|${stateLabel}⟩:</span>
+                        <span class="state-value">${amplitudeStr}</span>
+                    </div>
+                `;
+            }).join('');
+            
+            document.getElementById('state-vector-values').innerHTML = stateVectorHtml;
+            
+            // Отображаем вероятности
+            const probabilitiesHtml = probabilities.map((prob, i) => {
+                const stateLabel = i.toString(2).padStart(quantumSimulator.numQubits, '0');
+                const percent = (prob * 100).toFixed(2);
+                return `
+                    <div class="state-entry">
+                        <span class="state-label">|${stateLabel}⟩:</span>
+                        <span class="state-value">${percent}%</span>
+                    </div>
+                `;
+            }).join('');
+            
+            document.getElementById('state-probabilities').innerHTML = probabilitiesHtml;
+        }
+
+        function updateRealTimeChart(metrics) {
+            const timeLabel = new Date().toLocaleTimeString('ru-RU', {hour12: false});
+            
+            if (window.realTimeChart.data.labels.length >= 10) {
+                window.realTimeChart.data.labels.shift();
+                window.realTimeChart.data.datasets[0].data.shift();
+                window.realTimeChart.data.datasets[1].data.shift();
+            }
+            
+            window.realTimeChart.data.labels.push(timeLabel);
+            window.realTimeChart.data.datasets[0].data.push(metrics.qubitError * 1000);
+            window.realTimeChart.data.datasets[1].data.push(metrics.emulationSpeed);
+            window.realTimeChart.update();
+        }
+
+        function updateQuantumStateChart(metrics) {
+            window.quantumStateChart.data.datasets[0].data = [
+                metrics.entanglementEntropy * 70,
+                (1 - metrics.entanglementEntropy) * 70,
+                metrics.qubitError * 1000
+            ];
+            window.quantumStateChart.update();
+        }
+
+        function updateSecurityMetrics() {
+            const now = new Date();
+            document.getElementById('key-rotation-time').textContent = 
+                now.toLocaleTimeString('ru-RU', {hour12: false});
+            
+            const nextRotation = new Date(now);
+            nextRotation.setSeconds(nextRotation.getSeconds() + 3600);
+            const timeLeft = Math.max(0, Math.floor((nextRotation - now) / 1000));
+            
+            const hours = Math.floor(timeLeft / 3600);
+            const minutes = Math.floor((timeLeft % 3600) / 60);
+            const seconds = timeLeft % 60;
+            
+            document.getElementById('key-expiration').textContent = 
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (timeLeft < 300) {
+                document.getElementById('key-expiration').classList.add('blink');
+                document.getElementById('key-expiration').style.color = '#ff3b30';
+            } else {
+                document.getElementById('key-expiration').classList.remove('blink');
+                document.getElementById('key-expiration').style.color = '';
+            }
+        }
+
+        function updateClock() {
+            document.getElementById('current-time').textContent = 
+                new Date().toLocaleTimeString('ru-RU', {hour12: false});
+        }
+
+        // ==================== Квантовые операции ====================
+        function applyGate(gate) {
+            const qubit = parseInt(document.getElementById('target-qubit').value);
+            quantumSimulator.applyGate(gate, qubit);
+        }
+
+        function showControlModal(gateType) {
+            document.getElementById('gate-type').value = gateType.toUpperCase();
+            document.getElementById('gate-modal-title').textContent = `Применить ${gateType.toUpperCase()} гейт`;
+            document.getElementById('angle-input-group').style.display = 'none';
+            document.getElementById('gate-control-modal').style.display = 'block';
+        }
+
+        function hideGateModal() {
+            document.getElementById('gate-control-modal').style.display = 'none';
+        }
+
+        function applyControlledGate() {
+            const gateType = document.getElementById('gate-type').value.toLowerCase();
+            const control = parseInt(document.getElementById('control-qubit').value);
+            const target = parseInt(document.getElementById('target-qubit').value);
+            
+            quantumSimulator.applyGate(gateType, control, target);
+            hideGateModal();
+        }
+
+        function showMeasureModal() {
+            document.getElementById('measure-modal').style.display = 'block';
+        }
+
+        function hideMeasureModal() {
+            document.getElementById('measure-modal').style.display = 'none';
+        }
+
+        function performMeasurement() {
+            const qubit = parseInt(document.getElementById('measure-qubit').value);
+            const shots = parseInt(document.getElementById('measure-count').value);
+            
+            const results = quantumSimulator.measure(qubit, shots);
+            displayMeasurementResults(qubit, results);
+            hideMeasureModal();
+        }
+
+        function displayMeasurementResults(qubit, results) {
+            const total = results[0] + results[1];
+            const percent0 = (results[0] / total * 100).toFixed(1);
+            const percent1 = (results[1] / total * 100).toFixed(1);
+            
+            const resultHtml = `
+                <div class="task-item">
+                    <div class="task-info">
+                        <span class="task-name">Измерение кубита ${qubit}</span>
+                        <span class="task-desc">Всего измерений: ${total}</span>
+                    </div>
+                    <div>
+                        <div>|0⟩: ${results[0]} (${percent0}%)</div>
+                        <div>|1⟩: ${results[1]} (${percent1}%)</div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('measurement-results').insertAdjacentHTML('afterbegin', resultHtml);
+        }
+
+        function resetState() {
+            quantumSimulator.reset();
+            showNotification('Состояние сброшено в |0...0⟩', 'success');
+        }
+
+        function runCircuit() {
+            // Выполняем все операции в схеме
+            circuitOperations.forEach(op => {
+                quantumSimulator.applyGate(op.gate, ...op.qubits);
+            });
+            
+            showNotification('Схема успешно выполнена', 'success');
+        }
+
+        function clearCircuit() {
+            circuitOperations = [];
+            updateCircuitDisplay();
+            showNotification('Схема очищена', 'info');
+        }
+
+        function updateCircuitDisplay() {
+            const circuitDisplay = document.getElementById('circuit-display');
+            circuitDisplay.innerHTML = '';
+            
+            if (circuitOperations.length === 0) {
+                circuitDisplay.textContent = 'Схема пуста. Добавьте операции.';
+                return;
+            }
+            
+            const circuitHtml = circuitOperations.map((op, idx) => {
+                const gateName = op.gate.toUpperCase();
+                const qubitsStr = op.qubits.join(', ');
+                return `
+                    <div class="circuit-operation">
+                        <span class="gate-name">${gateName}</span>
+                        <span class="qubits">[${qubitsStr}]</span>
+                        <button onclick="removeOperation(${idx})" class="remove-btn">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+            
+            circuitDisplay.innerHTML = circuitHtml;
+        }
+
+        function removeOperation(index) {
+            circuitOperations.splice(index, 1);
+            updateCircuitDisplay();
+            showNotification('Операция удалена', 'success');
+        }
+
+        // ==================== Молекулярные расчеты ====================
+        function loadMolecule() {
+            const moleculeId = document.getElementById('molecule-select').value;
+            if (!moleculeId) return;
+            
+            const molecule = chemistryModule.loadMolecule(moleculeId);
+            updateMoleculeView(molecule);
+            
+            // Обновляем график энергий
+            updateMoleculeEnergyChart(molecule);
+            
+            showNotification(`Молекула ${molecule.formula} загружена`, 'success');
+        }
+
+        function updateMoleculeEnergyChart(molecule) {
+            const energies = [
+                molecule.energies.fci,
+                molecule.energies.vqe,
+                molecule.energies.hf
+            ];
+            
+            window.moleculeEnergyChart.data.datasets[0].data = energies;
+            window.moleculeEnergyChart.update();
+            
+            document.getElementById('ground-state-energy').textContent = 
+                `${molecule.energies.fci.toFixed(4)} Ha`;
+            
+            const vqeAccuracy = (1 - Math.abs(molecule.energies.vqe - molecule.energies.fci) / 
+                           Math.abs(molecule.energies.fci)) * 100;
+            document.getElementById('vqe-accuracy').textContent = 
+                `${vqeAccuracy.toFixed(2)}%`;
+        }
+
+        function calculateGroundState() {
+            if (!chemistryModule.currentMolecule) {
+                showNotification('Сначала выберите молекулу', 'error');
+                return;
+            }
+            
+            showNotification('Запущен расчет основного состояния...', 'info');
+            
+            setTimeout(() => {
+                const result = chemistryModule.calculateHartreeFock();
+                if (result.success) {
+                    updateMoleculeEnergyChart(chemistryModule.currentMolecule);
+                    addCalculationToHistory(result);
+                    showNotification('Расчет Хартри-Фока завершен', 'success');
+                } else {
+                    showNotification('Ошибка расчета', 'error');
+                }
+            }, 1000);
+        }
+
+        function runVQE() {
+            if (!chemistryModule.currentMolecule) {
+                showNotification('Сначала выберите молекулу', 'error');
+                return;
+            }
+            
+            showNotification('Запущен VQE расчет...', 'info');
+            
+            setTimeout(() => {
+                const result = chemistryModule.runVQE();
+                if (result.success) {
+                    updateMoleculeEnergyChart(chemistryModule.currentMolecule);
+                    addCalculationToHistory(result);
+                    showNotification('VQE расчет завершен', 'success');
+                    
+                    // Обновляем график сходимости
+                    updateVQEConvergenceChart(result.history);
+                } else {
+                    showNotification('Ошибка VQE расчета', 'error');
+                }
+            }, 1500);
+        }
+
+        function updateVQEConvergenceChart(history) {
+            const labels = history.map(item => item.iteration);
+            const data = history.map(item => item.energy);
+            
+            const ctx = document.createElement('canvas');
+            ctx.height = 200;
+            
+            const container = document.getElementById('calculation-history');
+            container.innerHTML = '';
+            container.appendChild(ctx);
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Энергия (Ha)',
+                        data,
+                        borderColor: '#007aff',
+                        backgroundColor: 'rgba(0, 122, 255, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: getChartOptions()
+            });
+        }
+
+        function addCalculationToHistory(result) {
+            const historyItem = document.createElement('div');
+            historyItem.className = 'task-item';
+            
+            const typeMap = {
+                'HF': 'Хартри-Фок',
+                'VQE': 'VQE'
+            };
+            
+            historyItem.innerHTML = `
+                <div class="task-info">
+                    <span class="task-name">${typeMap[result.type]} расчет</span>
+                    <span class="task-desc">
+                        Базис: ${result.basis} | 
+                        Энергия: ${result.energy.toFixed(4)} Ha | 
+                        Время: ${result.duration} мс
+                    </span>
+                </div>
+            `;
+            
+            document.getElementById('calculation-history').appendChild(historyItem);
+        }
+
+        // ==================== Управление задачами ====================
+        function showTaskModal() {
+            document.getElementById('task-modal').style.display = 'block';
+        }
+
+        function hideTaskModal() {
+            document.getElementById('task-modal').style.display = 'none';
+        }
+
+        function addNewTask() {
+            const name = document.getElementById('task-name').value;
+            const description = document.getElementById('task-description').value;
+            const params = document.getElementById('task-params-json').value;
+            const mode = document.getElementById('task-mode').value;
+            
+            if (!name || !description) {
+                showNotification('Заполните обязательные поля', 'error');
+                return;
+            }
+            
+            try {
+                JSON.parse(params);
+            } catch (e) {
+                showNotification('Некорректный JSON параметров', 'error');
+                return;
+            }
+            
+            const task = {
+                id: Date.now(),
+                name,
+                description,
+                params,
+                mode,
+                status: 'pending',
+                created: new Date()
+            };
+            
+            addTaskToUI(task);
+            hideTaskModal();
+            showNotification('Задача добавлена', 'success');
+        }
+
+        function addTaskToUI(task) {
+            const taskItem = document.createElement('div');
+            taskItem.className = `task-item ${task.status}`;
+            taskItem.dataset.id = task.id;
+            
+            taskItem.innerHTML = `
+                <div class="task-info">
+                    <span class="task-name">${task.name}</span>
+                    <span class="task-desc">${task.description}</span>
+                </div>
+                <div class="task-actions">
+                    <button onclick="startTask(${task.id})" class="btn small">
+                        <i class="fas fa-play"></i>
+                    </button>
+                    <button onclick="removeTask(${task.id})" class="btn small">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('tasks-container').appendChild(taskItem);
+        }
+
+        function startTask(taskId) {
+            const taskElement = document.querySelector(`.task-item[data-id="${taskId}"]`);
+            if (!taskElement) return;
+            
+            taskElement.classList.add('running');
+            showNotification('Задача запущена', 'info');
+            
+            // Эмуляция выполнения задачи
+            setTimeout(() => {
+                taskElement.classList.remove('running');
+                taskElement.classList.add('completed');
+                showNotification('Задача завершена', 'success');
+            }, 3000);
+        }
+
+        function removeTask(taskId) {
+            const taskElement = document.querySelector(`.task-item[data-id="${taskId}"]`);
+            if (taskElement) {
+                taskElement.remove();
+                showNotification('Задача удалена', 'info');
+            }
+        }
+
+        // ==================== ИИ ассистент ====================
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            addMessage(message, 'user');
+            input.value = '';
+            
+            // Эмуляция ответа ИИ
+            setTimeout(() => {
+                const responses = {
+                    'фиделитет': 'Для улучшения фиделитета гейтов рекомендуем:\n1. Увеличить T1/T2 кубитов\n2. Уменьшить уровень деполяризующего шума\n3. Оптимизировать длительность гейтов',
+                    'vqe': 'Оптимальные параметры VQE:\n- Анзац: UCCSD\n- Оптимизатор: COBYLA\n- Количество слоев: 3-5\n- Шоты: 1000-5000',
+                    'ошибки': 'Диагностика ошибок кубитов:\n1. Проверьте уровень шумов\n2. Анализ тепловых возбуждений\n3. Проверьте калибровку гейтов\n4. Анализ кросс-толка'
+                };
+                
+                let response = 'Я могу помочь с вопросами по квантовым вычислениям. Задайте более конкретный вопрос.';
+                
+                for (const [keyword, answer] of Object.entries(responses)) {
+                    if (message.toLowerCase().includes(keyword)) {
+                        response = answer;
+                        break;
+                    }
+                }
+                
+                addMessage(response, 'ai');
+            }, 500);
+        }
+
+        function sendQuickMessage(message) {
+            document.getElementById('chat-input').value = message;
+            sendMessage();
+        }
+
+        function addMessage(text, sender) {
+            const messagesContainer = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            messageDiv.textContent = text;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function clearChat() {
+            document.getElementById('chat-messages').innerHTML = `
+                <div class="message ai-message">
+                    Здравствуйте! Я ваш квантовый ИИ ассистент. Чем могу помочь?
+                </div>
+            `;
+        }
+
+        function saveChat() {
+            showNotification('Чат сохранен', 'success');
+        }
+
+        // ==================== Настройки системы ====================
+        function changeTheme() {
+            const theme = document.getElementById('system-theme').value;
+            document.body.className = `${theme}-theme`;
+            currentTheme = theme;
+        }
+
+        function updateRefreshInterval() {
+            const interval = parseInt(document.getElementById('update-interval').value);
+            if (interval >= 100 && interval <= 5000) {
+                updateInterval = interval;
+                clearInterval(window.updateIntervalId);
+                window.updateIntervalId = setInterval(updateAllMetrics, updateInterval);
+                showNotification('Интервал обновления изменен', 'success');
+            }
+        }
+
+        function saveSystemSettings() {
+            const autoSave = document.getElementById('auto-save').checked;
+            const aniMode = document.getElementById('ani-mode').value;
+            
+            localStorage.setItem('quantumx_settings', JSON.stringify({
+                theme: currentTheme,
+                interval: updateInterval,
+                autoSave,
+                aniMode
+            }));
+            
+            showNotification('Настройки сохранены', 'success');
+        }
+
+        // ==================== Вспомогательные функции ====================
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            const iconMap = {
+                'success': 'check-circle',
+                'error': 'exclamation-circle',
+                'info': 'info-circle'
+            };
+            
+            notification.innerHTML = `
+                <i class="fas fa-${iconMap[type]} notification-icon"></i>
+                <span>${message}</span>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('show');
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                    setTimeout(() => notification.remove(), 300);
+                }, 3000);
+            }, 10);
+        }
+
+        function rotateKeys() {
+            showNotification('Ротация ключей выполнена', 'success');
+            updateSecurityMetrics();
+        }
+
+        // ==================== Инициализация при загрузке ====================
+        function loadSettings() {
+            const savedSettings = localStorage.getItem('quantumx_settings');
+            if (savedSettings) {
+                const settings = JSON.parse(savedSettings);
+                
+                document.getElementById('system-theme').value = settings.theme;
+                changeTheme();
+                
+                document.getElementById('update-interval').value = settings.interval;
+                updateInterval = settings.interval;
+                
+                document.getElementById('auto-save').checked = settings.autoSave;
+                document.getElementById('ani-mode').value = settings.aniMode;
+            }
+        }
+
+        // Запускаем при загрузке
+        loadSettings();
+
+        // ==================== Переключение вкладок ====================
+        function switchTab(tabId) {
+            // Скрываем все вкладки
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+            
+            // Убираем активный класс у всех вкладок
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Показываем выбранную вкладку
+            document.getElementById(`${tabId}-tab`).style.display = 'block';
+            
+            // Добавляем активный класс к выбранной вкладке
+            event.currentTarget.classList.add('active');
+        }
+    </script>
+</body>
+</html>

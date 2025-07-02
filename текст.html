@@ -1,0 +1,1843 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Quantum Russian Stack Mobile</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@exampledev/new.css@1.1.2/new.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <style>
+        :root {
+            --nc-tx-1: #ffffff;
+            --nc-tx-2: #eeeeee;
+            --nc-bg-1: #1a1a1a;
+            --nc-bg-2: #2a2a2a;
+            --nc-bg-3: #3a3a3a;
+            --nc-lk-1: #007aff;
+            --nc-lk-2: #5ac8fa;
+            --nc-lk-tx: #ffffff;
+            --nc-ac-1: #007aff;
+            --nc-ac-tx: #ffffff;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.5;
+            color: var(--nc-tx-1);
+            background-color: var(--nc-bg-1);
+            padding: 0;
+            margin: 0;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        
+        .tabs {
+            display: flex;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 10px;
+            background-color: var(--nc-bg-2);
+            border-radius: 8px;
+        }
+        
+        .tab {
+            padding: 12px 16px;
+            cursor: pointer;
+            white-space: nowrap;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom: 2px solid var(--nc-ac-1);
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 10px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .metric-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .metric-card {
+            flex: 1 1 150px;
+            min-width: 0;
+            background-color: var(--nc-bg-2);
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .metric-title {
+            font-size: 14px;
+            color: var(--nc-tx-2);
+            margin-bottom: 5px;
+        }
+        
+        .metric-value {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background-color: var(--nc-bg-3);
+            border-radius: 3px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 250px;
+            margin-bottom: 15px;
+            background-color: var(--nc-bg-2);
+            border-radius: 8px;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        
+        #quantum-visualization {
+            width: 100%;
+            height: 250px;
+            background-color: var(--nc-bg-2);
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 16px;
+            background-color: var(--nc-ac-1);
+            color: var(--nc-ac-tx);
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.2s;
+            min-width: 44px;
+            min-height: 44px;
+            margin: 5px;
+        }
+        
+        .btn:active {
+            transform: scale(0.95);
+            background-color: var(--nc-lk-1);
+        }
+        
+        .btn i {
+            margin-right: 8px;
+        }
+        
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 15px;
+            justify-content: center;
+        }
+        
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--nc-bg-2);
+            color: var(--nc-tx-1);
+            padding: 12px 16px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            max-width: 90%;
+        }
+        
+        .notification.show {
+            opacity: 1;
+        }
+        
+        .notification.success {
+            border-left: 4px solid #34c759;
+        }
+        
+        .notification.error {
+            border-left: 4px solid #ff3b30;
+        }
+        
+        .notification.info {
+            border-left: 4px solid #007aff;
+        }
+        
+        .notification-icon {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+        
+        .notification.success .notification-icon {
+            color: #34c759;
+        }
+        
+        .notification.error .notification-icon {
+            color: #ff3b30;
+        }
+        
+        .notification.info .notification-icon {
+            color: #007aff;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            z-index: 1001;
+            overflow-y: auto;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        .modal-content {
+            background-color: var(--nc-bg-2);
+            border-radius: 8px;
+            padding: 20px;
+            max-width: 500px;
+            margin: 20px auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .modal-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--nc-tx-2);
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--nc-bg-3);
+            border-radius: 4px;
+            background-color: var(--nc-bg-1);
+            color: var(--nc-tx-1);
+            box-sizing: border-box;
+        }
+        
+        .task-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background-color: var(--nc-bg-2);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .task-info {
+            flex: 1;
+        }
+        
+        .task-name {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+        
+        .task-desc {
+            display: block;
+            font-size: 14px;
+            color: var(--nc-tx-2);
+        }
+        
+        #chat-messages {
+            height: 300px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            background-color: var(--nc-bg-2);
+            border-radius: 8px;
+            padding: 10px;
+        }
+        
+        .message {
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+        
+        .user-message {
+            background-color: var(--nc-ac-1);
+            color: var(--nc-ac-tx);
+            margin-left: auto;
+        }
+        
+        .ai-message {
+            background-color: var(--nc-bg-3);
+            margin-right: auto;
+        }
+        
+        #chat-input-container {
+            display: flex;
+            gap: 5px;
+        }
+        
+        #chat-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--nc-bg-3);
+            border-radius: 4px;
+            background-color: var(--nc-bg-1);
+            color: var(--nc-tx-1);
+        }
+        
+        .quick-message-btn {
+            padding: 5px 10px;
+            background-color: var(--nc-bg-3);
+            border: none;
+            border-radius: 4px;
+            color: var(--nc-tx-1);
+            font-size: 12px;
+            cursor: pointer;
+            margin-bottom: 5px;
+        }
+        
+        .blink {
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        @media (max-width: 768px) {
+            .tab {
+                padding: 10px 12px;
+                font-size: 14px;
+            }
+            
+            .metric-card {
+                flex: 1 1 100%;
+            }
+            
+            .chart-container {
+                height: 200px;
+            }
+            
+            #quantum-visualization {
+                height: 200px;
+            }
+            
+            .btn {
+                padding: 10px 12px;
+                font-size: 14px;
+            }
+            
+            .modal-content {
+                padding: 15px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .tabs {
+                font-size: 12px;
+            }
+            
+            .tab {
+                padding: 8px 10px;
+            }
+            
+            .metric-value {
+                font-size: 16px;
+            }
+            
+            .chart-container {
+                height: 180px;
+            }
+            
+            #quantum-visualization {
+                height: 180px;
+            }
+            
+            #chat-messages {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="text-align: center; margin-bottom: 5px;">Quantum Russian Stack</h1>
+        <div style="text-align: center; margin-bottom: 15px; color: var(--nc-tx-2);">
+            <span id="current-time"></span> | Мобильная версия
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('dashboard')">Дашборд</div>
+            <div class="tab" onclick="switchTab('quantum')">Квантовый симулятор</div>
+            <div class="tab" onclick="switchTab('molecules')">Молекулы</div>
+            <div class="tab" onclick="switchTab('tasks')">Задачи</div>
+            <div class="tab" onclick="switchTab('ai')">ИИ ассистент</div>
+        </div>
+        
+        <!-- Дашборд -->
+        <div id="dashboard-tab" class="tab-content" style="display: block;">
+            <div class="metric-container">
+                <div class="metric-card">
+                    <div class="metric-title">Использование CPU</div>
+                    <div class="metric-value" id="cpu-usage-text">0%</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="cpu-usage" style="width: 0%; background-color: #007aff;"></div>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-title">Использование памяти</div>
+                    <div class="metric-value" id="memory-usage-text">0%</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="memory-usage" style="width: 0%; background-color: #34c759;"></div>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-title">Температура CPU</div>
+                    <div class="metric-value" id="cpu-temp-text">0°C</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="cpu-temp" style="width: 0%; background-color: #34c759;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <h3>Производительность в реальном времени</h3>
+            <div class="chart-container">
+                <canvas id="real-time-chart"></canvas>
+            </div>
+            
+            <div class="metric-container">
+                <div class="metric-card">
+                    <div class="metric-title">Ошибка кубитов</div>
+                    <div class="metric-value" id="qubit-error-value">0.000000</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-title">Фиделитет гейтов</div>
+                    <div class="metric-value" id="gate-fidelity-value">0.0000</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-title">Скорость эмуляции</div>
+                    <div class="metric-value" id="emulation-speed">0 q/сек</div>
+                </div>
+            </div>
+            
+            <h3>Квантовое состояние</h3>
+            <div class="chart-container">
+                <canvas id="quantum-state-chart"></canvas>
+            </div>
+            
+            <div id="quantum-visualization"></div>
+            
+            <div class="metric-card">
+                <div class="metric-title">Энтропия состояния</div>
+                <div class="metric-value" id="state-entropy-value">0.00</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="state-entropy-bar" style="width: 0%; background-color: #5856d6;"></div>
+                </div>
+            </div>
+            
+            <h3>Безопасность</h3>
+            <div class="metric-container">
+                <div class="metric-card">
+                    <div class="metric-title">Последняя ротация ключей</div>
+                    <div class="metric-value" id="key-rotation-time">00:00:00</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-title">До следующей ротации</div>
+                    <div class="metric-value" id="key-expiration">00:00:00</div>
+                </div>
+            </div>
+            
+            <button class="btn" id="rotate-keys-btn">
+                <i class="fas fa-sync-alt"></i> Ротация ключей
+            </button>
+        </div>
+        
+        <!-- Квантовый симулятор -->
+        <div id="quantum-tab" class="tab-content">
+            <h3>Настройки симулятора</h3>
+            
+            <div class="form-group">
+                <label class="form-label">Количество кубитов</label>
+                <select id="qubit-count-select" class="form-control">
+                    <option value="2">2 кубита</option>
+                    <option value="4">4 кубита</option>
+                    <option value="8">8 кубита</option>
+                    <option value="16">16 кубитов</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Модель шумов</label>
+                <select id="noise-model-select" class="form-control">
+                    <option value="basic">Базовая (SNR)</option>
+                    <option value="advanced">Продвинутая (ML)</option>
+                    <option value="none">Без шумов</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Уровень шума</label>
+                <input type="range" id="noise-level-slider" min="0" max="100" value="20" class="form-control">
+                <div style="text-align: center; margin-top: 5px;">
+                    <span id="noise-level-value">20%</span>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Время гейтов (нс)</label>
+                <input type="range" id="gate-time-slider" min="10" max="500" value="100" class="form-control">
+                <div style="text-align: center; margin-top: 5px;">
+                    <span id="gate-time-value">100 нс</span>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Уровень автономности ИИ</label>
+                <input type="range" id="ai-autonomy-slider" min="0" max="2" value="1" class="form-control">
+                <div style="text-align: center; margin-top: 5px;">
+                    Уровень: <span id="ai-autonomy-level">Средний</span>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Детализация отчетов</label>
+                <input type="range" id="ai-detail-slider" min="0" max="2" value="1" class="form-control">
+                <div style="text-align: center; margin-top: 5px;">
+                    Уровень: <span id="ai-detail-level">Средний</span>
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn" onclick="runTask('calibration')">
+                    <i class="fas fa-tools"></i> Калибровка
+                </button>
+                <button class="btn" onclick="runTask('qaoa')">
+                    <i class="fas fa-project-diagram"></i> QAOA
+                </button>
+            </div>
+
+            <button class="btn" onclick="showTaskModal()">
+                <i class="fas fa-plus"></i> Новая задача
+            </button>
+
+            <h3>Обучение модели</h3>
+            <div class="btn-group">
+                <button class="btn" id="start-training-btn">
+                    <i class="fas fa-play"></i> Обучение
+                </button>
+                <button class="btn" id="emergency-stop-btn" style="background-color: #ff3b30;">
+                    <i class="fas fa-stop"></i> Аварийная остановка
+                </button>
+            </div>
+        </div>
+
+        <!-- Молекулы -->
+        <div id="molecules-tab" class="tab-content">
+            <h3>Молекулярный симулятор</h3>
+
+            <div class="form-group">
+                <label class="form-label">Молекула</label>
+                <select id="molecule-select" class="form-control" onchange="loadMolecule()">
+                    <option value="">Выберите молекулу</option>
+                    <option value="h2">H₂ (Молекула водорода)</option>
+                    <option value="h2o">H₂O (Вода)</option>
+                    <option value="co2">CO₂ (Диоксид углерода)</option>
+                    <option value="ch4">CH₄ (Метан)</option>
+                    <option value="c6h6">C₆H₆ (Бензол)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Базисный набор</label>
+                <select id="basis-set-select" class="form-control">
+                    <option value="sto-3g">STO-3G</option>
+                    <option value="6-31g">6-31G</option>
+                    <option value="cc-pvdz">cc-pVDZ</option>
+                </select>
+            </div>
+
+            <div id="molecule-viewer" style="text-align: center; padding: 20px; background-color: var(--nc-bg-2); border-radius: 8px; margin-bottom: 15px;">
+                Выберите молекулу для просмотра
+            </div>
+
+            <h3>Энергетические состояния</h3>
+            <div class="chart-container">
+                <canvas id="molecule-energy-chart"></canvas>
+            </div>
+
+            <div class="metric-container">
+                <div class="metric-card">
+                    <div class="metric-title">Энергия основного состояния</div>
+                    <div class="metric-value" id="ground-state-energy">0.0000 Ha</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Точность VQE</div>
+                    <div class="metric-value" id="vqe-accuracy">0.00%</div>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn" onclick="calculateGroundState()">
+                    <i class="fas fa-calculator"></i> Расчет основного состояния
+                </button>
+                <button class="btn" onclick="runVQE()">
+                    <i class="fas fa-atom"></i> Запуск VQE
+                </button>
+            </div>
+
+            <button class="btn" onclick="showMoleculeModal()">
+                <i class="fas fa-plus"></i> Добавить молекулу
+            </button>
+
+            <h3>История расчетов</h3>
+            <div id="calculation-history" style="max-height: 200px; overflow-y: auto;">
+                <!-- Здесь будут появляться выполненные расчеты -->
+            </div>
+        </div>
+
+        <!-- Задачи -->
+        <div id="tasks-tab" class="tab-content">
+            <h3>Активные задачи</h3>
+            <div id="tasks-container">
+                <!-- Здесь будут появляться задачи -->
+            </div>
+
+            <button class="btn" onclick="showTaskModal()">
+                <i class="fas fa-plus"></i> Добавить задачу
+            </button>
+        </div>
+
+        <!-- ИИ ассистент -->
+        <div id="ai-tab" class="tab-content">
+            <h3>Квантовый ИИ ассистент</h3>
+
+            <div id="chat-messages">
+                <div class="message ai-message">
+                    Здравствуйте! Я ваш квантовый ИИ ассистент. Чем могу помочь?
+                </div>
+            </div>
+
+            <div style="margin-bottom: 10px;">
+                <button class="quick-message-btn" onclick="sendQuickMessage('Как улучшить фиделитет гейтов?')">Фиделитет гейтов</button>
+                <button class="quick-message-btn" onclick="sendQuickMessage('Оптимальные параметры для VQE')">Параметры VQE</button>
+                <button class="quick-message-btn" onclick="sendQuickMessage('Диагностика ошибок кубитов')">Диагностика ошибок</button>
+            </div>
+
+            <div id="chat-input-container">
+                <input type="text" id="chat-input" placeholder="Введите ваш вопрос..." class="form-control">
+                <button class="btn" onclick="sendMessage()">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+
+            <div class="btn-group" style="margin-top: 10px;">
+                <button class="btn" onclick="clearChat()">
+                    <i class="fas fa-trash"></i> Очистить
+                </button>
+                <button class="btn" onclick="saveChat()">
+                    <i class="fas fa-save"></i> Сохранить
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно задачи -->
+    <div id="task-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Новая задача</div>
+                <button class="modal-close" onclick="hideTaskModal()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Название задачи</label>
+                <input type="text" id="task-name" class="form-control" placeholder="Например: Оптимизация QAOA">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Описание</label>
+                <input type="text" id="task-description" class="form-control" placeholder="Краткое описание задачи">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Параметры (JSON)</label>
+                <textarea id="task-params-json" class="form-control" rows="3" placeholder='{"iterations": 100, "layers": 3}'></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Режим выполнения</label>
+                <select id="task-mode" class="form-control">
+                    <option value="auto">Автоматический (ANI)</option>
+                    <option value="manual">Ручной</option>
+                </select>
+            </div>
+            <button class="btn" onclick="addNewTask()" style="width: 100%;">
+                <i class="fas fa-plus"></i> Добавить задачу
+            </button>
+        </div>
+    </div>
+
+    <!-- Модальное окно молекулы -->
+    <div id="molecule-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Новая молекула</div>
+                <button class="modal-close" onclick="hideMoleculeModal()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Название</label>
+                <input type="text" id="molecule-name" class="form-control" placeholder="Например: Вода">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Формула</label>
+                <input type="text" id="molecule-formula" class="form-control" placeholder="Например: H₂O">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Геометрия (JSON)</label>
+                <textarea id="molecule-geometry" class="form-control" rows="5" placeholder='[ ["O", [0.0, 0.0, 0.0]], ["H", [0.957, 0.0, 0.0]], ["H", [-0.24, 0.927, 0.0]] ]'></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Заряд</label>
+                <input type="number" id="molecule-charge" class="form-control" value="0">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Мультиплетность</label>
+                <input type="number" id="molecule-multiplicity" class="form-control" value="1" min="1">
+            </div>
+            <button class="btn" onclick="addNewMolecule()" style="width: 100%;">
+                <i class="fas fa-plus"></i> Добавить молекулу
+            </button>
+        </div>
+    </div>
+
+    <!-- Модальное окно настроек -->
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Настройки системы</div>
+                <button class="modal-close" onclick="hideSystemSettings()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Тема интерфейса</label>
+                <select id="system-theme" class="form-control">
+                    <option value="dark">Темная</option>
+                    <option value="light">Светлая</option>
+                    <option value="blue">Синяя</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Интервал обновления (мс)</label>
+                <input type="number" id="update-interval" class="form-control" value="1000">
+            </div>
+            <div class="form-group">
+                <label class="form-label">
+                    <input type="checkbox" id="auto-save" checked> Автосохранение
+                </label>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Режим ANI</label>
+                <select id="ani-mode" class="form-control">
+                    <option value="balanced">Сбалансированный</option>
+                    <option value="performance">Макс. производительность</option>
+                    <option value="accuracy">Макс. точность</option>
+                </select>
+            </div>
+            <button class="btn" onclick="saveSystemSettings()" style="width: 100%;">
+                <i class="fas fa-save"></i> Сохранить настройки
+            </button>
+        </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 20px; padding: 10px; color: var(--nc-tx-2); font-size: 12px;">
+        Quantum Russian Stack Mobile v1.0 | © 2023 Квантовые вычисления
+    </div>
+
+    <script>
+        // ==================== Квантовый симулятор ====================
+        class QuantumSimulator {
+            constructor(numQubits) {
+                this.numQubits = numQubits;
+                this.dim = 1 << numQubits;
+                this.state = new Array(this.dim).fill(0);
+                this.state[0] = 1; // Начальное состояние |0...0⟩
+                this.noiseModel = new ARSNoiseModel(numQubits);
+                this.lastOperationTime = 0;
+                this.gateFidelity = 0.999;
+                this.qubitError = 0.0001;
+                this.gateTime = 100; // нс
+            }
+            
+            normalize() {
+                let norm = 0;
+                for (let i = 0; i < this.state.length; i++) {
+                    norm += Math.pow(Math.abs(this.state[i]), 2);
+                }
+                norm = Math.sqrt(norm);
+                
+                for (let i = 0; i < this.state.length; i++) {
+                    this.state[i] /= norm;
+                }
+            }
+            
+            applyHadamard(qubit) {
+                const startTime = performance.now();
+                
+                if (qubit >= this.numQubits) {
+                    throw new Error("Qubit index out of bounds");
+                }
+                
+                const stride = 1 << qubit;
+                const dim = 1 << this.numQubits;
+                const sqrt2 = Math.sqrt(2);
+                
+                for (let i = 0; i < dim; i += 2 * stride) {
+                    for (let j = i; j < i + stride; j++) {
+                        const a = j;
+                        const b = j + stride;
+                        const aVal = this.state[a];
+                        const bVal = this.state[b];
+                        
+                        this.state[a] = (aVal + bVal) / sqrt2;
+                        this.state[b] = (aVal - bVal) / sqrt2;
+                    }
+                }
+                
+                this.normalize();
+                this.noiseModel.apply(this);
+                
+                this.lastOperationTime = performance.now() - startTime;
+                this.updateMetrics();
+            }
+            
+            measure() {
+                // Вероятностное измерение
+                const probabilities = this.state.map(x => Math.pow(Math.abs(x), 2));
+                const rand = Math.random();
+                let sum = 0;
+                let result = 0;
+                
+                for (let i = 0; i < probabilities.length; i++) {
+                    sum += probabilities[i];
+                    if (rand <= sum) {
+                        result = i;
+                        break;
+                    }
+                }
+                
+                return result.toString(2).padStart(this.numQubits, '0').split('').map(Number);
+            }
+            
+            getStateVector() {
+                return this.state.slice();
+            }
+            
+            calculateEntropy() {
+                let entropy = 0;
+                for (let i = 0; i < this.state.length; i++) {
+                    const prob = Math.pow(Math.abs(this.state[i]), 2);
+                    if (prob > 0) {
+                        entropy -= prob * Math.log2(prob);
+                    }
+                }
+                return entropy;
+            }
+            
+            updateMetrics() {
+                this.qubitError = 0.0001 + Math.random() * 0.00005;
+                this.gateFidelity = 0.999 - Math.random() * 0.0005;
+            }
+            
+            setGateTime(time) {
+                this.gateTime = time;
+                this.noiseModel.setGateTime(time);
+            }
+        }
+
+        class ARSNoiseModel {
+            constructor(numQubits) {
+                this.numQubits = numQubits;
+                this.t1 = 100e-6;
+                this.t2 = 50e-6;
+                this.externalNoiseFactor = 1.0;
+                this.gateTime = 100; // нс
+            }
+            
+            setGateTime(time) {
+                this.gateTime = time;
+            }
+            
+            setExternalNoise(frequency, gain) {
+                this.externalNoiseFactor = Math.sqrt(frequency * gain) / 1000.0;
+            }
+            
+            apply(simulator) {
+                const decay = Math.exp(-this.gateTime / (this.t1 * 1e9 * this.externalNoiseFactor));
+                const dephase = Math.exp(-this.gateTime / (this.t2 * 1e9 * this.externalNoiseFactor));
+                
+                // Amplitude damping
+                for (let i = 1; i < simulator.state.length; i++) {
+                    simulator.state[i] *= decay;
+                }
+                
+                // Phase damping
+                for (let i = 0; i < simulator.state.length; i++) {
+                    const phaseNoise = 1.0 + (Math.random() - 0.5) * 0.1 * dephase;
+                    simulator.state[i] *= phaseNoise;
+                }
+                
+                // Нормализация
+            let norm = 0;
+            for (let i = 0; i < simulator.state.length; i++) {
+                norm += Math.pow(Math.abs(simulator.state[i]), 2);
+            }
+            norm = Math.sqrt(norm);
+            
+            for (let i = 0; i < simulator.state.length; i++) {
+                simulator.state[i] /= norm;
+            }
+        }
+    }
+
+    // ==================== Молекулярные расчеты ====================
+    class MoleculeCalculator {
+        constructor() {
+            this.molecules = {
+                'h2': {
+                    name: 'Молекула водорода',
+                    formula: 'H₂',
+                    geometry: [['H', [0, 0, 0]], ['H', [0, 0, 0.74]]],
+                    charge: 0,
+                    multiplicity: 1,
+                    basis_sets: ['sto-3g', '6-31g', 'cc-pvdz']
+                },
+                'h2o': {
+                    name: 'Вода',
+                    formula: 'H₂O',
+                    geometry: [
+                        ['O', [0, 0, 0]],
+                        ['H', [0.957, 0.0, 0.0]],
+                        ['H', [-0.24, 0.927, 0.0]]
+                    ],
+                    charge: 0,
+                    multiplicity: 1,
+                    basis_sets: ['sto-3g', '6-31g', 'cc-pvdz']
+                },
+                'co2': {
+                    name: 'Диоксид углерода',
+                    formula: 'CO₂',
+                    geometry: [
+                        ['C', [0, 0, 0]],
+                        ['O', [0, 0, 1.16]],
+                        ['O', [0, 0, -1.16]]
+                    ],
+                    charge: 0,
+                    multiplicity: 1,
+                    basis_sets: ['sto-3g', '6-31g', 'cc-pvdz']
+                },
+                'ch4': {
+                    name: 'Метан',
+                    formula: 'CH₄',
+                    geometry: [
+                        ['C', [0, 0, 0]],
+                        ['H', [0.629, 0.629, 0.629]],
+                        ['H', [-0.629, -0.629, 0.629]],
+                        ['H', [-0.629, 0.629, -0.629]],
+                        ['H', [0.629, -0.629, -0.629]]
+                    ],
+                    charge: 0,
+                    multiplicity: 1,
+                    basis_sets: ['sto-3g', '6-31g']
+                },
+                'c6h6': {
+                    name: 'Бензол',
+                    formula: 'C₆H₆',
+                    geometry: [
+                        ['C', [0, 1.4, 0]],
+                        ['C', [1.212, 0.7, 0]],
+                        ['C', [1.212, -0.7, 0]],
+                        ['C', [0, -1.4, 0]],
+                        ['C', [-1.212, -0.7, 0]],
+                        ['C', [-1.212, 0.7, 0]],
+                        ['H', [0, 2.5, 0]],
+                        ['H', [2.145, 1.25, 0]],
+                        ['H', [2.145, -1.25, 0]],
+                        ['H', [0, -2.5, 0]],
+                        ['H', [-2.145, -1.25, 0]],
+                        ['H', [-2.145, 1.25, 0]]
+                    ],
+                    charge: 0,
+                    multiplicity: 1,
+                    basis_sets: ['sto-3g', '6-31g']
+                }
+            };
+            this.calculationHistory = [];
+        }
+
+        loadMolecule(moleculeId) {
+            const molecule = this.molecules[moleculeId];
+            if (!molecule) return null;
+
+            // Обновляем интерфейс
+            document.getElementById('molecule-viewer').innerHTML = `
+                <h4>${molecule.name} (${molecule.formula})</h4>
+                <p>Атомов: ${molecule.geometry.length}</p>
+                <p>Заряд: ${molecule.charge}</p>
+                <p>Мультиплетность: ${molecule.multiplicity}</p>
+            `;
+
+            return molecule;
+        }
+
+        calculateGroundState(moleculeId, basisSet) {
+            const molecule = this.molecules[moleculeId];
+            if (!molecule) return null;
+
+            // Эмуляция расчета основного состояния
+            let energy;
+            switch (moleculeId) {
+                case 'h2':
+                    energy = -1.117 + (Math.random() * 0.01);
+                    break;
+                case 'h2o':
+                    energy = -76.024 + (Math.random() * 0.01);
+                    break;
+                case 'co2':
+                    energy = -187.998 + (Math.random() * 0.01);
+                    break;
+                case 'ch4':
+                    energy = -40.212 + (Math.random() * 0.01);
+                    break;
+                case 'c6h6':
+                    energy = -230.722 + (Math.random() * 0.01);
+                    break;
+                default:
+                    energy = 0;
+            }
+
+            // Обновляем график
+            const energyChart = Chart.getChart('molecule-energy-chart');
+            energyChart.data.datasets[0].data = [energy * 1.02, energy, energy * 1.05];
+            energyChart.update();
+
+            // Добавляем в историю
+            const calcInfo = {
+                type: 'ground_state',
+                molecule: molecule.name,
+                basis: basisSet,
+                energy: energy.toFixed(6),
+                date: new Date().toLocaleString()
+            };
+            this.calculationHistory.unshift(calcInfo);
+            updateCalculationHistory();
+
+            return energy;
+        }
+
+        runVQE(moleculeId, basisSet) {
+            const molecule = this.molecules[moleculeId];
+            if (!molecule) return null;
+
+            // Эмуляция VQE расчета
+            const exactEnergy = this.calculateGroundState(moleculeId, basisSet);
+            const vqeEnergy = exactEnergy * (1 + (Math.random() * 0.01 - 0.005));
+            const accuracy = 100 - Math.abs((vqeEnergy - exactEnergy) / exactEnergy * 100);
+
+            // Обновляем график
+            const energyChart = Chart.getChart('molecule-energy-chart');
+            energyChart.data.datasets[0].data = [exactEnergy, vqeEnergy, exactEnergy * 1.05];
+            energyChart.update();
+
+            // Обновляем метрики
+            document.getElementById('ground-state-energy').textContent = `${vqeEnergy.toFixed(4)} Ha`;
+            document.getElementById('vqe-accuracy').textContent = `${accuracy.toFixed(2)}%`;
+
+            // Добавляем в историю
+            const calcInfo = {
+                type: 'vqe',
+                molecule: molecule.name,
+                basis: basisSet,
+                energy: vqeEnergy.toFixed(6),
+                accuracy: accuracy.toFixed(2),
+                date: new Date().toLocaleString()
+            };
+            this.calculationHistory.unshift(calcInfo);
+            updateCalculationHistory();
+
+            return { energy: vqeEnergy, accuracy };
+        }
+    }
+
+    // ==================== Управление задачами ====================
+    class TaskManager {
+        constructor() {
+            this.tasks = [];
+            this.taskIdCounter = 1;
+        }
+
+        addTask(name, description, params, mode) {
+            const task = {
+                id: this.taskIdCounter++,
+                name,
+                description,
+                params,
+                mode,
+                status: 'pending',
+                progress: 0,
+                created: new Date(),
+                started: null,
+                completed: null
+            };
+            this.tasks.unshift(task);
+            return task;
+        }
+
+        startTask(taskId) {
+            const task = this.tasks.find(t => t.id === taskId);
+            if (!task) return false;
+
+            task.status = 'running';
+            task.started = new Date();
+            task.progress = 0;
+
+            // Эмуляция выполнения задачи
+            const interval = setInterval(() => {
+                task.progress += 10;
+                if (task.progress >= 100) {
+                    task.status = 'completed';
+                    task.completed = new Date();
+                    clearInterval(interval);
+                }
+                updateTasksList();
+            }, 500);
+
+            return true;
+        }
+
+        cancelTask(taskId) {
+            const task = this.tasks.find(t => t.id === taskId);
+            if (!task) return false;
+
+            task.status = 'canceled';
+            task.completed = new Date();
+            return true;
+        }
+    }
+
+    // ==================== Инициализация системы ====================
+    let quantumSimulator = new QuantumSimulator(2);
+    let moleculeCalculator = new MoleculeCalculator();
+    let taskManager = new TaskManager();
+    let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    let updateInterval = isMobile ? 2000 : 1000;
+    let lastKeyRotation = new Date();
+    let keyRotationInterval = 3600; // 1 час в секундах
+
+    // Инициализация графиков
+    const realTimeCtx = document.getElementById('real-time-chart').getContext('2d');
+    const quantumStateCtx = document.getElementById('quantum-state-chart').getContext('2d');
+    const moleculeEnergyCtx = document.getElementById('molecule-energy-chart').getContext('2d');
+
+    const mobileChartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: {
+            duration: 0
+        },
+        elements: {
+            point: {
+                radius: 0
+            }
+        },
+        plugins: {
+            legend: {
+                position: 'top',
+                labels: {
+                    color: '#ffffff',
+                    font: {
+                        size: 10
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                grid: {
+                    color: 'rgba(255,255,255,0.1)'
+                },
+                ticks: {
+                    color: '#aaaaaa',
+                    font: {
+                        size: 10
+                    }
+                }
+            },
+            y: {
+                grid: {
+                    color: 'rgba(255,255,255,0.1)'
+                },
+                ticks: {
+                    color: '#aaaaaa',
+                    font: {
+                        size: 10
+                    }
+                },
+                beginAtZero: true
+            }
+        }
+    };
+
+    // График производительности
+    const realTimeChart = new Chart(realTimeCtx, {
+        type: 'line',
+        data: {
+            labels: Array(10).fill(''),
+            datasets: [
+                {
+                    label: 'Ошибка кубитов (x1000)',
+                    data: Array(10).fill(0),
+                    borderColor: '#ff3b30',
+                    backgroundColor: 'rgba(255, 59, 48, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: true
+                },
+                {
+                    label: 'Скорость эмуляции (q/сек)',
+                    data: Array(10).fill(0),
+                    borderColor: '#34c759',
+                    backgroundColor: 'rgba(52, 199, 89, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: true
+                }
+            ]
+        },
+        options: mobileChartOptions
+    });
+
+    // Круговая диаграмма квантового состояния
+    const quantumStateChart = new Chart(quantumStateCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Запутанность', 'Суперпозиция', 'Шум'],
+            datasets: [{
+                data: [45, 35, 20],
+                backgroundColor: [
+                    '#007aff',
+                    '#5856d6',
+                    '#ff2d55'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            ...mobileChartOptions,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        color: '#ffffff',
+                        font: {
+                            size: 10
+                        }
+                    }
+                }
+            },
+            cutout: '70%'
+        }
+    });
+
+    // График энергии молекулы
+    const moleculeEnergyChart = new Chart(moleculeEnergyCtx, {
+        type: 'bar',
+        data: {
+            labels: ['FCI', 'VQE', 'HF'],
+            datasets: [{
+                label: 'Энергия (Ha)',
+                data: [0, 0, 0],
+                backgroundColor: [
+                    '#007aff',
+                    '#34c759',
+                    '#ff9500'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            ...mobileChartOptions,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+
+    // ==================== 3D визуализация ====================
+    let scene, camera, renderer, sphere;
+    function initQuantumVisualization() {
+        const container = document.getElementById('quantum-visualization');
+        if (!container) return;
+        
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+        camera.position.z = 5;
+        
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(width, height);
+        container.appendChild(renderer.domElement);
+        
+        const geometry = new THREE.SphereGeometry(1, 16, 16);
+        const material = new THREE.MeshBasicMaterial({ 
+            color: 0x007aff,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.8
+        });
+        sphere = new THREE.Mesh(geometry, material);
+        scene.add(sphere);
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            sphere.rotation.x += 0.005;
+            sphere.rotation.y += 0.01;
+            renderer.render(scene, camera);
+        }
+        animate();
+        
+        window.addEventListener('resize', () => {
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+        });
+    }
+
+    // ==================== Обновление данных ====================
+    function updateSystemMetrics() {
+        // Обновление CPU, памяти и температуры
+        const cpuUsage = 20 + Math.random() * 60;
+        const memoryUsage = 30 + Math.random() * 50;
+        const cpuTemp = 40 + Math.random() * 40;
+        
+        document.getElementById('cpu-usage-text').textContent = `${cpuUsage.toFixed(1)}%`;
+        document.getElementById('cpu-usage').style.width = `${cpuUsage}%`;
+        
+        document.getElementById('memory-usage-text').textContent = `${memoryUsage.toFixed(1)}%`;
+        document.getElementById('memory-usage').style.width = `${memoryUsage}%`;
+        
+        document.getElementById('cpu-temp-text').textContent = `${cpuTemp.toFixed(1)}°C`;
+        const tempWidth = Math.min(100, cpuTemp);
+        document.getElementById('cpu-temp').style.width = `${tempWidth}%`;
+        
+        // Цвет индикатора температуры
+        const tempBar = document.getElementById('cpu-temp');
+        if (cpuTemp > 80) {
+            tempBar.style.background = '#ff3b30';
+        } else if (cpuTemp > 60) {
+            tempBar.style.background = '#ff9500';
+        } else {
+            tempBar.style.background = '#34c759';
+        }
+    }
+
+    function updateQuantumMetrics() {
+        // Обновление квантовых метрик
+        document.getElementById('qubit-error-value').textContent = 
+            quantumSimulator.qubitError.toFixed(6);
+        document.getElementById('gate-fidelity-value').textContent = 
+            quantumSimulator.gateFidelity.toFixed(4);
+        
+        const entropy = quantumSimulator.calculateEntropy();
+        document.getElementById('state-entropy-value').textContent = entropy.toFixed(2);
+        document.getElementById('state-entropy-bar').style.width = `${entropy * 50}%`;
+        
+        // Скорость эмуляции
+        const speed = quantumSimulator.lastOperationTime > 0 ? 
+            Math.floor(1000 / quantumSimulator.lastOperationTime) : 0;
+        document.getElementById('emulation-speed').textContent = `${speed} q/сек`;
+        
+        // Обновление графиков
+        const timeLabel = new Date().toLocaleTimeString('ru-RU', {hour12: false});
+        
+        if (realTimeChart.data.labels.length >= 10) {
+            realTimeChart.data.labels.shift();
+            realTimeChart.data.datasets[0].data.shift();
+            realTimeChart.data.datasets[1].data.shift();
+        }
+        
+        realTimeChart.data.labels.push(timeLabel);
+        realTimeChart.data.datasets[0].data.push(quantumSimulator.qubitError * 1000);
+        realTimeChart.data.datasets[1].data.push(speed);
+        realTimeChart.update();
+        
+        // Обновление круговой диаграммы
+        quantumStateChart.data.datasets[0].data = [
+            entropy * 70,
+            (1 - entropy) * 70,
+            quantumSimulator.qubitError * 1000
+        ];
+        quantumStateChart.update();
+    }
+
+    function updateSecurityMetrics() {
+        // Обновление метрик безопасности
+        const now = new Date();
+        document.getElementById('key-rotation-time').textContent = 
+            lastKeyRotation.toLocaleTimeString('ru-RU', {hour12: false});
+        
+        const nextRotation = new Date(lastKeyRotation);
+        nextRotation.setSeconds(nextRotation.getSeconds() + keyRotationInterval);
+        const timeLeft = Math.max(0, Math.floor((nextRotation - now) / 1000));
+        
+        const hours = Math.floor(timeLeft / 3600);
+        const minutes = Math.floor((timeLeft % 3600) / 60);
+        const seconds = timeLeft % 60;
+        
+        document.getElementById('key-expiration').textContent = 
+            `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        
+        if (timeLeft < 300) {
+            document.getElementById('key-expiration').classList.add('blink');
+            document.getElementById('key-expiration').style.color = '#ff3b30';
+        } else {
+            document.getElementById('key-expiration').classList.remove('blink');
+            document.getElementById('key-expiration').style.color = '';
+        }
+    }
+
+    function updateCalculationHistory() {
+        const historyContainer = document.getElementById('calculation-history');
+        historyContainer.innerHTML = '';
+        
+        moleculeCalculator.calculationHistory.slice(0, 5).forEach(calc => {
+            const div = document.createElement('div');
+            div.className = 'task-item';
+            div.innerHTML = `
+                <div class="task-info">
+                    <span class="task-name">${calc.type === 'ground_state' ? 'Основное состояние' : 'VQE'} (${calc.molecule})</span>
+                    <span class="task-desc">${calc.basis} | ${calc.energy} Ha | ${calc.date}</span>
+                </div>
+            `;
+            historyContainer.appendChild(div);
+        });
+    }
+
+    function updateTasksList() {
+        const tasksContainer = document.getElementById('tasks-container');
+        tasksContainer.innerHTML = '';
+        
+        taskManager.tasks.slice(0, 5).forEach(task => {
+            const div = document.createElement('div');
+            div.className = 'task-item';
+            
+            let statusColor = '#aaaaaa';
+            if (task.status === 'running') statusColor = '#007aff';
+            else if (task.status === 'completed') statusColor = '#34c759';
+            else if (task.status === 'canceled') statusColor = '#ff3b30';
+            
+            div.innerHTML = `
+                <div class="task-info">
+                    <span class="task-name">${task.name}</span>
+                    <span class="task-desc">${task.description} | ${task.status}</span>
+                </div>
+                <div style="display: flex; align-items: center;">
+                    <div style="width: 60px; height: 6px; background: #333; border-radius: 3px; margin-right: 10px;">
+                        <div style="width: ${task.progress}%; height: 100%; background: ${statusColor}; border-radius: 3px;"></div>
+                    </div>
+                    <small>${task.progress}%</small>
+                </div>
+            `;
+            
+            tasksContainer.appendChild(div);
+        });
+    }
+
+    // ==================== Основной цикл обновления ====================
+    function updateAllMetrics() {
+        updateSystemMetrics();
+        updateQuantumMetrics();
+        updateSecurityMetrics();
+    }
+
+    // ==================== Обработчики событий ====================
+    function rotateKeys() {
+        const btn = document.getElementById('rotate-keys-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Ротация...';
+        
+        setTimeout(() => {
+            lastKeyRotation = new Date();
+            showNotification('Ключи успешно ротированы', 'success');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sync-alt"></i> Ротация';
+        }, 1500);
+    }
+
+    function startTraining() {
+        const btn = document.getElementById('start-training-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Обучение...';
+        
+        // Применяем несколько квантовых операций
+        setTimeout(() => {
+            quantumSimulator.applyHadamard(0);
+            quantumSimulator.applyHadamard(1);
+            
+            const result = quantumSimulator.measure();
+            showNotification(`Результат измерения: ${result.join('')}`, 'success');
+            
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-play"></i> Обучение';
+        }, 2000);
+    }
+
+    function loadMolecule() {
+        const moleculeId = document.getElementById('molecule-select').value;
+        if (!moleculeId) return;
+        
+        moleculeCalculator.loadMolecule(moleculeId);
+    }
+
+    function calculateGroundState() {
+        const moleculeId = document.getElementById('molecule-select').value;
+        const basisSet = document.getElementById('basis-set-select').value;
+        
+        if (!moleculeId) {
+            showNotification('Выберите молекулу', 'error');
+            return;
+        }
+        
+        showNotification('Расчет основного состояния...', 'info');
+        
+        setTimeout(() => {
+            const energy = moleculeCalculator.calculateGroundState(moleculeId, basisSet);
+            document.getElementById('ground-state-energy').textContent = `${energy.toFixed(4)} Ha`;
+            showNotification('Расчет завершен', 'success');
+        }, 1000);
+    }
+
+    function runVQE() {
+        const moleculeId = document.getElementById('molecule-select').value;
+        const basisSet = document.getElementById('basis-set-select').value;
+        
+        if (!moleculeId) {
+            showNotification('Выберите молекулу', 'error');
+            return;
+        }
+        
+        showNotification('Запуск VQE...', 'info');
+        
+        setTimeout(() => {
+            const result = moleculeCalculator.runVQE(moleculeId, basisSet);
+            showNotification(`VQE завершен. Точность: ${result.accuracy.toFixed(2)}%`, 'success');
+        }, 1500);
+    }
+
+    function showTaskModal() {
+        document.getElementById('task-modal').style.display = 'block';
+    }
+
+    function hideTaskModal() {
+        document.getElementById('task-modal').style.display = 'none';
+    }
+
+    function addNewTask() {
+        const name = document.getElementById('task-name').value;
+        const description = document.getElementById('task-description').value;
+        const params = document.getElementById('task-params-json').value;
+        const mode = document.getElementById('task-mode').value;
+        
+        if (!name || !description) {
+            showNotification('Заполните название и описание', 'error');
+            return;
+        }
+        
+        try {
+            JSON.parse(params);
+        } catch (e) {
+            showNotification('Некорректный JSON параметров', 'error');
+            return;
+        }
+        
+        const task = taskManager.addTask(name, description, params, mode);
+        showNotification(`Задача "${name}" добавлена`, 'success');
+        hideTaskModal();
+        
+        // Автозапуск если выбран автоматический режим
+        if (mode === 'auto') {
+            setTimeout(() => {
+                taskManager.startTask(task.id);
+                showNotification(`Задача "${name}" запущена`, 'info');
+            }, 500);
+        }
+        
+        updateTasksList();
+    }
+
+    function showMoleculeModal() {
+        document.getElementById('molecule-modal').style.display = 'block';
+    }
+
+    function hideMoleculeModal() {
+        document.getElementById('molecule-modal').style.display = 'none';
+    }
+
+    function addNewMolecule() {
+        const name = document.getElementById('molecule-name').value;
+        const formula = document.getElementById('molecule-formula').value;
+        const geometry = document.getElementById('molecule-geometry').value;
+        const charge = parseInt(document.getElementById('molecule-charge').value);
+        const multiplicity = parseInt(document.getElementById('molecule-multiplicity').value);
+        
+        if (!name || !formula || !geometry) {
+            showNotification('Заполните обязательные поля', 'error');
+            return;
+        }
+        
+        try {
+            JSON.parse(geometry);
+        } catch (e) {
+            showNotification('Некорректный JSON геометрии', 'error');
+            return;
+        }
+        
+        showNotification(`Молекула "${name}" добавлена`, 'success');
+        hideMoleculeModal();
+    }
+
+    function runTask(taskType) {
+        let taskName, description;
+        
+        switch (taskType) {
+            case 'calibration':
+                taskName = 'Калибровка системы';
+                description = 'Автоматическая калибровка квантовых гейтов';
+                break;
+            case 'qaoa':
+                taskName = 'Оптимизация QAOA';
+                description = 'Квантовая аппроксимационная оптимизация';
+                break;
+            default:
+                taskName = 'Неизвестная задача';
+                description = '';
+        }
+        
+        const task = taskManager.addTask(taskName, description, '{}', 'auto');
+        showNotification(`Задача "${taskName}" добавлена`, 'success');
+        
+        setTimeout(() => {
+            taskManager.startTask(task.id);
+            showNotification(`Задача "${taskName}" запущена`, 'info');
+        }, 500);
+        
+        updateTasksList();
+    }
+
+    // ==================== Инициализация ====================
+    document.addEventListener('DOMContentLoaded', () => {
+        // Инициализация 3D визуализации
+        setTimeout(initQuantumVisualization, 500);
+        
+        // Обновление времени
+        function updateClock() {
+            document.getElementById('current-time').textContent = 
+                new Date().toLocaleTimeString('ru-RU', {hour12: false});
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+        
+        // Основной цикл обновления метрик
+        setInterval(updateAllMetrics, updateInterval);
+        updateAllMetrics();
+        
+        // Обработчики кнопок
+        document.getElementById('rotate-keys-btn').addEventListener('click', rotateKeys);
+        document.getElementById('start-training-btn').addEventListener('click', startTraining);
+        
+        // Обработчик аварийной остановки
+        document.getElementById('emergency-stop-btn').addEventListener('click', () => {
+            if (confirm('Вы уверены, что хотите выполнить аварийную остановку?')) {
+                showNotification('Аварийная остановка выполнена', 'error');
+            }
+        });
+        
+        // Обработчик уровня шума
+        document.getElementById('noise-level-slider').addEventListener('input', (e) => {
+            const value = e.target.value;
+            document.getElementById('noise-level-value').textContent = `${value}%`;
+            quantumSimulator.noiseModel.t1 = 100e-6 * (1 - value/200);
+            quantumSimulator.noiseModel.t2 = 50e-6 * (1 - value/200);
+        });
+        
+        // Обработчик времени гейтов
+        document.getElementById('gate-time-slider').addEventListener('input', (e) => {
+            const value = e.target.value;
+            document.getElementById('gate-time-value').textContent = `${value} нс`;
+            quantumSimulator.setGateTime(parseInt(value));
+        });
+        
+        // Обработчик количества кубитов
+        document.getElementById('qubit-count-select').addEventListener('change', (e) => {
+            const numQubits = parseInt(e.target.value);
+            quantumSimulator = new QuantumSimulator(numQubits);
+            showNotification(`Инициализирован симулятор с ${numQubits} кубитами`, 'info');
+        });
+        
+        // Обработчик модели шумов
+        document.getElementById('noise-model-select').addEventListener('change', (e) => {
+            const model = e.target.value;
+            let message = '';
+            
+            switch (model) {
+                case 'basic':
+                    message = 'Базовая модель шумов (SNR)';
+                    break;
+                case 'advanced':
+                    message = 'Продвинутая модель шумов (ML)';
+                    break;
+                case 'none':
+                    message = 'Шумы отключены';
+                    break;
+            }
+            
+            showNotification(message, 'info');
+        });
+        
+        // Обработчик автономности ИИ
+        document.getElementById('ai-autonomy-slider').addEventListener('input', (e) => {
+            const value = parseInt(e.target.value);
+            let level = '';
+            
+            switch (value) {
+                case 0: level = 'Низкий'; break;
+                case 1: level = 'Средний'; break;
+                case 2: level = 'Высокий'; break;
+            }
+            
+            document.getElementById('ai-autonomy-level').textContent = level;
+        });
+        
+        // Обработчик детализации отчетов
+        document.getElementById('ai-detail-slider').addEventListener('input', (e) => {
+            const value = parseInt(e.target.value);
+            let level = '';
+            
+            switch (value) {
+                case 0: level = 'Минимальный'; break;
+                case 1: level = 'Средний'; break;
+                case 2: level = 'Подробный'; break;
+            }
+            
+            document.getElementById('ai-detail-level').textContent = level;
+        });
+    });
+
+    // ==================== Вспомогательные функции ====================
+    function showNotification(message, type) {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
+            <div class="notification-icon">
+                ${type === 'success' ? '<i class="fas fa-check-circle"></i>' : 
+                  type === 'error' ? '<i class="fas fa-exclamation-circle"></i>' : 
+                  '<i class="fas fa-info-circle"></i>'}
+            </div>
+            <div class="notification-content">${message}</div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.classList.add('show');
+        }, 10);
+        
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.style.display = 'none';
+        });
+        
+        event.target.classList.add('active');
+        document.getElementById(`${tabId}-tab`).style.display = 'block';
+        
+        if (tabId === 'dashboard') {
+            setTimeout(initQuantumVisualization, 100);
+        }
+    }
+</script>
+</body>
+</html>
